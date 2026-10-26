@@ -1,3 +1,8 @@
+/* Tipografía Source Sans 3 (licencia SIL OFL) incluida en el proyecto: la demo funciona sin internet. */
+@font-face { font-family: 'Source Sans 3'; font-weight: 400; font-style: normal; font-display: swap; src: url('../fonts/SourceSans3-Regular.woff') format('woff'); }
+@font-face { font-family: 'Source Sans 3'; font-weight: 600; font-style: normal; font-display: swap; src: url('../fonts/SourceSans3-SemiBold.woff') format('woff'); }
+@font-face { font-family: 'Source Sans 3'; font-weight: 700; font-style: normal; font-display: swap; src: url('../fonts/SourceSans3-Bold.woff') format('woff'); }
+
 /* SIGTA demo · estilos compartidos por las 6 pantallas.
    Los colores están como variables (:root) para cambiarlos en un solo lugar. */
 :root {
@@ -97,7 +102,7 @@ svg.ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-wi
 .planta-caja { background: var(--fondo); border-radius: 10px; padding: 14px; font-size: 13px; }
 .planta-caja b { display: block; margin-bottom: 2px; }
 .planta-caja small { color: var(--texto-suave); display: block; margin-bottom: 8px; }
-.sidebar .ayuda { display: flex; align-items: center; gap: 10px; padding: 18px 8px 6px; color: var(--texto); background: none; border: 0; }
+.sidebar .ayuda { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 18px 8px 6px; color: var(--texto); background: none; border: 0; font: inherit; font-size: 14.5px; text-align: left; white-space: nowrap; cursor: pointer; }
 .sidebar .version { font-size: 11px; color: var(--texto-suave); padding: 4px 0 0 2px; }
 
 .principal { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -334,6 +339,8 @@ table.tabla { width: 100%; border-collapse: collapse; }
 
 /* ---------- Logo, tema y accesibilidad ---------- */
 .marca .logo { display: block; width: 176px; height: auto; }
+/* En oscuro el logo real se apoya sobre una placa clara para conservar sus colores y que se lea "ARGENTINA". */
+:root[data-tema="oscuro"] .marca .logo { background: #fff; border-radius: 10px; padding: 6px 10px; box-sizing: content-box; width: 156px; }
 .btn-icono { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--linea); background: var(--superficie); color: var(--texto-2); padding: 0; }
 .btn-icono:hover { background: var(--gris-suave); color: var(--texto); }
 .btn-menu { display: none; }

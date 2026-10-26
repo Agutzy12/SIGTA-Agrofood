@@ -24,7 +24,9 @@ Marcá con `[x]` a medida que se completan.
 
 ## Para seguir (tesis y programa final)
 
-- [ ] Reemplazar `public/img/logo.png` por el logo original en SVG o PNG de mayor resolución (hoy está recortado de una captura de la web)
+- [x] Logo real con fondo transparente (297×97). En modo oscuro se apoya sobre una placa clara
+- [x] Tipografía Source Sans 3 incluida en el proyecto (`public/fonts`, licencia OFL): la demo funciona sin internet
+- [ ] Opcional: reemplazar `logo.png` por el logo vectorial (SVG) si la empresa lo provee
 - [ ] Login real con usuarios y contraseñas (hoy se elige el rol)
 - [ ] Reemplazar los valores de especificación de ejemplo por los reales de Calidad
 - [ ] Revisar con Agrifood los códigos (OP, lote, protocolo, pallet) y las vidas útiles

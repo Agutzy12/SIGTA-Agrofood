@@ -215,7 +215,7 @@ const MENU_ADMIN = [
   { texto: 'Compras', icono: 'compras' }, { texto: 'Inventario', icono: 'inventario' },
   { texto: 'Ventas y despacho', icono: 'ventas' }, { texto: 'Reportes', icono: 'reportes' },
 ];
-const LOGO = '<img class="logo" src="img/logo.png" alt="Agrifood Argentina" width="176" height="61">';
+const LOGO = '<img class="logo" src="img/logo.png" alt="Agrifood Argentina" width="176" height="57">';
 
 /** Arma el esqueleto de la pantalla. `activo` = id del menú; `miga` = texto del camino; devuelve el contenedor donde dibujar. */
 S.montar = async ({ activo, miga }) => {
