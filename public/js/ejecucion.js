@@ -32,14 +32,13 @@ function cabeceraOrden() {
   const enProd = o.estado === 'EN_PRODUCCION';
   return `
   <div class="cabecera"><div><h1>Ejecución y consumo</h1><p>${S.esc(o.producto_nombre)} · ${S.esc(o.linea_nombre || '')} · ${S.esc(o.hora_prevista < '14:00' ? 'Turno mañana' : 'Turno tarde')}</p></div>
-    <div class="acciones">${S.pillOP(o.estado)}<button class="btn" id="btn-receta">${S.ico('libro')} Ver receta v${o.receta_version}</button></div></div>
+    <div class="acciones"><button class="btn" id="btn-receta">${S.ico('libro')} Ver receta</button></div></div>
   ${S.proceso(2)}
-  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>${S.esc(o.numero)}</h2><p class="sub">Receta ${S.esc(o.receta_codigo)} · Versión ${o.receta_version} · Objetivo de formulación: ${S.kg(o.cantidad_kg)}</p></div>${enProd ? pill : ''}</div>
-    <div class="metas" style="margin-top:0">
+  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>${S.esc(o.numero)}</h2><p class="sub">Receta ${S.esc(o.receta_codigo)} v${o.receta_version} · Objetivo ${S.kg(o.cantidad_kg)}</p></div>${enProd ? pill : ''}</div>
+    <div class="rejilla col-3">
       <div class="dato"><small>${enProd ? 'Inicio real' : 'Inicio previsto'}</small><b>${enProd ? S.fechaHora(o.inicio_real) : `${S.fecha(o.fecha_proyectada)} · ${S.esc(o.hora_prevista)}`}</b></div>
-      <div class="dato"><small>Lote de producción asignado</small><b>${S.esc(o.lote_codigo_previsto || 'Se asigna al iniciar')}</b></div>
-      <div class="dato"><small>Vencimiento previsto</small><b>${o.vencimiento_previsto ? `${S.fecha(o.vencimiento_previsto)} · ` : ''}Vida útil: ${o.vida_util_meses} meses</b></div>
-      <div class="dato"><small>Operador responsable</small><b>${S.esc(o.operador || '—')}</b></div></div></section>`;
+      <div class="dato"><small>Lote</small><b>${S.esc(o.lote_codigo_previsto || 'Se asigna al iniciar')}</b></div>
+      <div class="dato"><small>Vencimiento previsto</small><b>${o.vencimiento_previsto ? S.fecha(o.vencimiento_previsto) : `${o.vida_util_meses} meses de vida útil`}</b></div></div></section>`;
 }
 
 /* ---------- Orden PLANIFICADA: todavía no se empezó ---------- */
@@ -47,10 +46,10 @@ function vistaPlanificada() {
   const o = orden;
   const puede = S.puede('PRODUCCION');
   document.getElementById('pantalla').innerHTML = cabeceraOrden() + `
-  <section class="tarjeta"><h2>Insumos previstos</h2><p class="sub">Cantidades teóricas según la receta. Los lotes de origen se asignan al iniciar la elaboración.</p>
+  <section class="tarjeta"><h2>Insumos previstos</h2><p class="sub">Según la receta. Los lotes se eligen al iniciar.</p>
     <table class="tabla" style="margin-top:16px"><thead><tr><th>Insumo</th><th>Teórico</th></tr></thead><tbody>
     ${o.items.map((i) => `<tr><td><b>${S.esc(i.nombre)}</b><span class="peq">${S.esc(i.codigo)} · ${i.tipo === 'MP' ? 'Materia prima' : 'Empaque crítico'}</span></td><td class="num">${S.num(i.cantidad_teorica)} ${S.esc(i.unidad)}</td></tr>`).join('')}</tbody></table></section>
-  <div class="barra-acciones"><span class="nota">Al iniciar se asigna el lote ${S.esc(o.producto_codigo)} de la semana y se registra tu usuario como operador.</span>
+  <div class="barra-acciones"><span class="nota">Al iniciar se asigna el número de lote.</span>
     <div class="botones"><button class="btn peligro" id="btn-cancelar" ${puede ? '' : 'disabled'} title="${S.titleRol(['PRODUCCION'])}">Cancelar orden</button>
     <button class="btn primario" id="btn-iniciar" ${puede ? '' : 'disabled'} title="${S.titleRol(['PRODUCCION'])}">${S.ico('play')} Iniciar elaboración</button></div></div>`;
   enlazarReceta();
@@ -125,8 +124,7 @@ function filaHTML(f, i) {
   return `<tr data-i="${i}">
     <td><b>${S.esc(item.nombre)}</b><span class="peq">${S.esc(item.codigo)}${mismos.length > 1 ? ` · Partida ${nro} de ${mismos.length}` : item.tipo === 'ME' ? ' · Empaque crítico' : ''}</span></td>
     <td style="min-width:230px"><select class="entrada sel-partida" ${dis}>${f.partida_id ? '' : '<option value="">Elegí un lote</option>'}
-      ${(item.partidas || []).map((x) => `<option value="${x.id}" ${x.id === f.partida_id ? 'selected' : ''}>${S.esc(x.nro_lote)} · saldo ${S.num(x.cantidad)}</option>`).join('')}</select></td>
-    <td class="num venc">${p && p.vencimiento ? S.fecha(p.vencimiento) : 'No aplica'}</td>
+      ${(item.partidas || []).map((x) => `<option value="${x.id}" ${x.id === f.partida_id ? 'selected' : ''}>${S.esc(x.nro_lote)} · saldo ${S.num(x.cantidad)}</option>`).join('')}</select><span class="peq venc"></span></td>
     <td class="num">${f.teorico ? `${S.num(f.teorico)} ${S.esc(item.unidad)}` : '—'}</td>
     <td><div class="con-unidad" style="width:130px"><input class="entrada inp-real" inputmode="decimal" value="${S.esc(String(f.cantidad ?? ''))}" ${dis}><span>${S.esc(item.unidad)}</span></div></td>
     <td class="validacion"></td></tr>`;
@@ -138,28 +136,25 @@ function refrescarCalculos() {
     const [t, c] = validar(f);
     tr.querySelector('.validacion').innerHTML = S.pill(t, c);
     const p = partidaDe(f);
-    tr.querySelector('.venc').textContent = p && p.vencimiento ? S.fecha(p.vencimiento) : 'No aplica';
+    tr.querySelector('.venc').textContent = p && p.vencimiento ? `Vence ${S.fecha(p.vencimiento)}` : '';
   });
   const invalidas = filas.filter((f) => validar(f)[1] === 'rojo').length;
   const criticosSinLote = orden.items.filter((i) => i.critico && !filas.some((f) => f.insumo_id === i.insumo_id && f.partida_id && aNum(f.cantidad) > 0)).length;
   const asignadas = filas.filter((f) => f.partida_id && aNum(f.cantidad) > 0).length;
   const ok = invalidas === 0 && criticosSinLote === 0;
   const mp = mpConsumidos();
-  const trigo = orden.items.find((i) => i.tipo === 'MP');
-  const partesTrigo = filas.filter((f) => trigo && f.insumo_id === trigo.insumo_id);
   document.getElementById('resumen-consumo').innerHTML = `
-    <span style="color:${ok ? 'var(--verde)' : 'var(--rojo)'};font-weight:600;display:flex;gap:8px;align-items:center">${S.ico(ok ? 'checkCirculo' : 'info')}${asignadas} partidas asignadas · ${ok ? 'Sin faltantes' : `${invalidas + criticosSinLote} para revisar`}</span>
-    <span style="color:var(--texto-suave);font-size:14px">${trigo && partesTrigo.length > 1 ? `${S.esc(trigo.nombre.split(' ').pop().replace(/^./, (c) => c.toUpperCase()))}: ${partesTrigo.map((f) => S.num(aNum(f.cantidad))).join(' + ')} = ${S.num(partesTrigo.reduce((a, f) => a + aNum(f.cantidad), 0))} kg · ` : ''}Total materias primas: ${S.num(mp, 0)} kg</span>`;
+    <span style="color:${ok ? 'var(--verde)' : 'var(--rojo)'};font-weight:600;display:flex;gap:8px;align-items:center">${S.ico(ok ? 'checkCirculo' : 'info')}${ok ? 'Todos los lotes son válidos' : `${invalidas + criticosSinLote} para revisar`}</span>
+    <span style="color:var(--texto-suave);font-size:14px">Total materias primas: ${S.num(mp, 0)} kg</span>`;
 
   // Resultado y merma
   const neto = aNum(document.getElementById('neto').value);
   const merma = mp > 0 ? ((mp - neto) / mp) * 100 : 0;
   document.getElementById('merma').innerHTML = `${S.num(Math.max(0, merma), 2)} % <small style="font-size:14px;font-weight:600;margin-left:6px">${S.num(Math.max(0, mp - neto), 1)} kg</small>`;
-  document.getElementById('formula-merma').textContent = `Merma = (${S.num(mp)} kg consumidos – ${S.num(neto)} kg netos) / ${S.num(mp)} kg × 100. Empaque real: ${empaque().bolsas} bolsas y ${empaque().etiquetas} etiquetas.`;
+  document.getElementById('formula-merma').textContent = 'Merma = (kg consumidos − kg netos) / kg consumidos.';
 
   // Aviso previo
-  const e = empaque();
-  document.getElementById('aviso-final').innerHTML = `${S.ico('escudo', 22)}<div><b>Al confirmar: el lote quedará en cuarentena</b>Se descontarán ${S.num(mp)} kg de materias primas, ${e.bolsas} bolsas y ${e.etiquetas} etiquetas. La OP pasará a En control de calidad y el nuevo lote de ${S.num(neto)} kg a Cuarentena: no disponible para consumo, venta ni despacho.</div>`;
+  document.getElementById('aviso-final').innerHTML = `${S.ico('escudo', 22)}<div><b>Al finalizar, el lote queda en cuarentena</b>Se descuenta el stock de los insumos y el lote no se puede vender ni despachar hasta que Calidad lo libere.</div>`;
   document.getElementById('btn-finalizar').disabled = !S.puede('PRODUCCION') || orden.pausada;
 }
 function empaque() {
@@ -178,29 +173,29 @@ function vistaEjecucion() {
   const dis = puede && !o.pausada ? '' : 'disabled';
 
   document.getElementById('pantalla').innerHTML = cabeceraOrden() + `
-  ${o.pausada ? `<div class="aviso rojo">${S.ico('pausa')}<div><b>Línea pausada · ${S.esc(o.motivo_pausa || '')}</b>Reanudá la línea para seguir cargando el consumo y finalizar la elaboración.</div></div>` : ''}
-  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Consumo real por lote de origen</h2><p class="sub">Asigná una partida válida a cada insumo. Las cantidades todavía no se descontaron del stock.</p></div>
+  ${o.pausada ? `<div class="aviso rojo">${S.ico('pausa')}<div><b>Línea pausada · ${S.esc(o.motivo_pausa || '')}</b>Reanudá la línea para seguir.</div></div>` : ''}
+  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Consumo real por lote de origen</h2><p class="sub">Elegí el lote de cada insumo. El stock se descuenta al finalizar.</p></div>
     <button class="btn" id="btn-dividir" ${dis}>${S.ico('dividir')} Dividir consumo</button></div>
-    <table class="tabla"><thead><tr><th>Insumo</th><th>Lote de origen</th><th>Vencimiento</th><th>Teórico</th><th>Real</th><th>Validación</th></tr></thead><tbody id="cuerpo-consumo">${filas.map(filaHTML).join('')}</tbody></table>
+    <table class="tabla"><thead><tr><th>Insumo</th><th>Lote de origen</th><th>Teórico</th><th>Real</th><th></th></tr></thead><tbody id="cuerpo-consumo">${filas.map(filaHTML).join('')}</tbody></table>
     <div style="display:flex;justify-content:space-between;margin-top:16px;gap:16px;flex-wrap:wrap" id="resumen-consumo"></div></section>
 
   <div class="dos-col" style="grid-template-columns:minmax(0,1fr) 360px">
-    <section class="tarjeta"><h2>Resultado de la elaboración</h2><p class="sub">Completá el peso neto antes de enviar el lote a calidad.</p>
+    <section class="tarjeta"><h2>Resultado</h2>
       <div class="rejilla col-3" style="margin-top:18px">
-        <div class="campo"><label>Cantidad neta elaborada *</label><div class="con-unidad"><input class="entrada" id="neto" inputmode="decimal" value="${netoInicial}" ${dis}><span>kg</span></div></div>
-        <div class="campo"><label>Bolsas conformadas</label><div class="con-unidad"><input class="entrada" id="bolsas" inputmode="numeric" value="${bultosInicial}" ${dis}><span>× ${presentacion} kg</span></div></div>
-        <div class="campo"><label>Merma de proceso</label><div class="entrada" id="merma" style="background:var(--ambar-suave);border-color:var(--ambar-suave);color:var(--ambar-oscuro);font-size:24px;font-weight:600;padding:8px 14px"></div></div></div>
+        <div class="campo"><label>Kg netos elaborados *</label><div class="con-unidad"><input class="entrada" id="neto" inputmode="decimal" value="${netoInicial}" ${dis}><span>kg</span></div></div>
+        <div class="campo"><label>Bolsas</label><div class="con-unidad"><input class="entrada" id="bolsas" inputmode="numeric" value="${bultosInicial}" ${dis}><span>× ${presentacion} kg</span></div></div>
+        <div class="campo"><label>Merma</label><div class="entrada" id="merma" style="background:var(--ambar-suave);border-color:var(--ambar-suave);color:var(--ambar-oscuro);font-size:24px;font-weight:600;padding:8px 14px"></div></div></div>
       <p class="ayuda" style="margin-top:14px;color:var(--texto-suave);font-size:13px" id="formula-merma"></p></section>
     <section class="tarjeta"><h2>Pausa de línea</h2>
       <div class="campo" style="margin-top:14px"><label>Motivo para pausar *</label><select class="entrada" id="motivo" ${o.pausada || !puede ? 'disabled' : ''}>${S.config.motivos_pausa.map((m) => `<option>${S.esc(m)}</option>`).join('')}</select></div>
-      <p class="ayuda" style="margin:12px 0;font-size:13px;color:var(--texto-suave)">Al pausar se registrará este motivo. La línea sigue en producción hasta confirmar.</p>
+      <div style="height:12px"></div>
       ${o.pausada ? `<button class="btn primario" id="btn-reanudar" ${puede ? '' : 'disabled'}>${S.ico('play')} Reanudar línea</button>` : `<button class="btn" id="btn-pausar" ${puede ? '' : 'disabled'}>${S.ico('pausa')} Pausar línea</button>`}</section>
   </div>
 
   <div class="confirmacion" id="aviso-final"></div>
-  <div class="barra-acciones"><span class="nota">Revisión previa al envío · ${S.fecha(new Date().toISOString())}, ${S.hora(new Date())} · Los consumos se registran al finalizar.</span>
+  <div class="barra-acciones"><span class="nota">Podés guardar el avance y seguir después.</span>
     <div class="botones"><button class="btn" id="btn-avance" ${puede ? '' : 'disabled'} title="${S.titleRol(['PRODUCCION'])}">${S.ico('guardar')} Guardar avance</button>
-      <button class="btn primario" id="btn-finalizar" title="${S.titleRol(['PRODUCCION'])}">${S.ico('flecha')} Finalizar elaboración y enviar a CC</button></div></div>`;
+      <button class="btn primario" id="btn-finalizar" title="${S.titleRol(['PRODUCCION'])}">${S.ico('flecha')} Finalizar y enviar a Calidad</button></div></div>`;
 
   enlazarReceta();
   // Cambios en la tabla

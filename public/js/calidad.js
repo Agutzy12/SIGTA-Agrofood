@@ -4,7 +4,6 @@ let pendientes = [];
 let historial = [];
 let lote = null;           // lote seleccionado (con su especificación)
 let dictamen = 'APROBAR_LIBERAR';
-let textoBusqueda = '';
 
 const aNum = (v) => { const n = Number(String(v).replace(',', '.')); return String(v).trim() === '' || Number.isNaN(n) ? null : n; };
 
@@ -29,20 +28,17 @@ function valores() {
 
 /* ---------- Columna izquierda ---------- */
 function listaLotes() {
-  const t = textoBusqueda.trim().toLowerCase();
-  const visibles = pendientes.filter((l) => !t || `${l.codigo} ${l.producto_nombre}`.toLowerCase().includes(t));
+  const visibles = pendientes;
   const kgTotal = pendientes.reduce((a, l) => a + l.cantidad_kg, 0);
   document.getElementById('lista-lotes').innerHTML = `
     <h2>En cuarentena</h2><p class="sub">${pendientes.length} lote${pendientes.length === 1 ? '' : 's'} · ${S.kg(kgTotal)}</p>
-    <label class="buscador" style="margin:16px 0;border:1px solid var(--linea);border-radius:9px;padding:11px 12px">${S.ico('buscar', 18)}<input id="buscar-lote" placeholder="Buscar lote o producto" value="${S.esc(textoBusqueda)}" style="width:100%"></label>
+    <div style="height:14px"></div>
     ${visibles.map((l) => {
       const hoy = l.creado_en.slice(0, 10) === S.hoyTexto();
-      const estadoAnalisis = lote && lote.id === l.id ? 'Seleccionado' : l.borrador ? 'Análisis en curso' : 'Análisis pendiente';
+      const estadoAnalisis = l.borrador ? 'Análisis en curso' : 'Análisis pendiente';
       return `<div class="lote-item ${lote && lote.id === l.id ? 'sel' : ''}" data-lote="${l.id}"><span class="cod">${S.esc(l.codigo)}</span><b>${S.esc(l.producto_nombre)}</b>
         <small>${S.kg(l.cantidad_kg)} · ${hoy ? 'Hoy' : S.fecha(l.creado_en).slice(0, 5)}, ${S.hora(l.creado_en)}</small><small class="est">${estadoAnalisis}</small></div>`;
-    }).join('') || '<div class="vacio-grande" style="padding:20px 0">No hay lotes que coincidan.</div>'}`;
-  const b = document.getElementById('buscar-lote');
-  b.oninput = () => { textoBusqueda = b.value; listaLotes(); const n = document.getElementById('buscar-lote'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
+    }).join('') || '<div class="vacio-grande" style="padding:20px 0">No hay lotes en cuarentena.</div>'}`;
   document.querySelectorAll('[data-lote]').forEach((el) => { el.onclick = () => elegir(Number(el.dataset.lote)); });
 }
 
@@ -58,10 +54,8 @@ function elegir(id) {
 /* ---------- Detalle del lote ---------- */
 function dibujarLote() {
   const cont = document.getElementById('detalle');
-  const docs = document.getElementById('docs');
   if (!lote) {
     cont.innerHTML = `<section class="tarjeta"><div class="vacio-grande"><h3>No hay lotes en cuarentena</h3>Cuando Producción finalice una elaboración, el lote aparece acá para su análisis.</div></section>`;
-    docs.innerHTML = '';
     return;
   }
   const e = lote.especificacion;
@@ -73,39 +67,31 @@ function dibujarLote() {
   const sel = (campo) => (b[campo] || e[campo].esperado);
 
   cont.innerHTML = `
-  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Protocolo R.BPM.01V01</h2><p class="sub">Registro de control de calidad · Pendiente de firma</p></div>${S.pill('Cuarentena', 'ambar')}</div>
-    <h2 style="font-size:26px;margin:6px 0 18px">${S.esc(lote.producto_nombre)}</h2>
-    <div class="rejilla col-3"><div class="dato"><small>Lote</small><b>${S.esc(lote.codigo)}</b></div><div class="dato"><small>Orden de producción</small><b>${S.esc(lote.op_numero)}</b></div>
-      <div class="dato"><small>Cantidad neta / Vencimiento</small><b>${S.kg(lote.cantidad_kg)} · ${S.fecha(lote.vencimiento)}</b></div></div>
-    <p class="sub" style="margin-top:16px;font-size:13px">Elaboración finalizada: ${S.fechaHora(lote.op_fin)}. Estado de OP: En control de calidad.</p></section>
+  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>${S.esc(lote.producto_nombre)}</h2><p class="sub">Protocolo R.BPM.01V01 · Pendiente de firma</p></div>${S.pill('Cuarentena', 'ambar')}</div>
+    <div class="rejilla col-3"><div class="dato"><small>Lote</small><b>${S.esc(lote.codigo)}</b></div><div class="dato"><small>Orden</small><b>${S.esc(lote.op_numero)}</b></div>
+      <div class="dato"><small>Cantidad · Vencimiento</small><b>${S.kg(lote.cantidad_kg)} · ${S.fecha(lote.vencimiento)}</b></div></div></section>
 
-  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Determinaciones del producto</h2><p class="sub">Especificación de ejemplo · ${S.esc(lote.producto_codigo)} · Criterios ilustrativos, no límites normativos.</p></div>
-      <div style="display:flex;gap:10px;align-items:center"><span id="conformes"></span><button class="btn chico" id="btn-ejemplo" ${dis} title="Completa resultados dentro de especificación para agilizar la demo">Cargar resultados de ejemplo</button></div></div>
-    <table class="tabla"><thead><tr><th>Determinación</th><th style="width:240px">Resultado</th><th>Especificación de ejemplo</th><th>Contraste</th></tr></thead><tbody>
+  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Determinaciones</h2><p class="sub">Valores de ejemplo, no son límites normativos.</p></div>
+      <div style="display:flex;gap:10px;align-items:center"><span id="conformes"></span><button class="btn chico" id="btn-ejemplo" ${dis} title="Completa resultados dentro de especificación para agilizar la demo">Cargar ejemplo</button></div></div>
+    <table class="tabla"><thead><tr><th>Determinación</th><th style="width:240px">Resultado</th><th>Debe ser</th><th></th></tr></thead><tbody>
       <tr><td><b>Humedad</b></td><td><div class="con-unidad"><input class="entrada" id="humedad" inputmode="decimal" value="${S.esc(b.humedad ?? '')}" ${dis}><span>%</span></div></td><td>≤ ${S.num(e.humedad_max, 1)} %</td><td id="c-humedad"></td></tr>
       <tr><td><b>pH</b></td><td><div class="con-unidad"><input class="entrada" id="ph" inputmode="decimal" value="${S.esc(b.ph ?? '')}" ${dis}><span>pH</span></div></td><td>${S.num(e.ph_min, 1)} a ${S.num(e.ph_max, 1)}</td><td id="c-ph"></td></tr>
       <tr><td><b>Aroma</b></td><td><select class="entrada" id="aroma" ${dis}>${opciones(e.aroma.opciones, sel('aroma'))}</select></td><td>${S.esc(e.aroma.texto)}</td><td id="c-aroma"></td></tr>
       <tr><td><b>Color</b></td><td><select class="entrada" id="color" ${dis}>${opciones(e.color.opciones, sel('color'))}</select></td><td>${S.esc(e.color.texto)}</td><td id="c-color"></td></tr>
       <tr><td><b>Sabor</b></td><td><select class="entrada" id="sabor" ${dis}>${opciones(e.sabor.opciones, sel('sabor'))}</select></td><td>${S.esc(e.sabor.texto)}</td><td id="c-sabor"></td></tr>
-      <tr><td><b>Recuento microbiológico</b></td><td><div class="con-unidad"><input class="entrada" id="ufc" inputmode="numeric" value="${S.esc(b.ufc ?? '')}" ${dis}><span>UFC/g</span></div></td><td>≤ ${S.num(e.ufc_max)} UFC/g</td><td id="c-ufc"></td></tr>
+      <tr><td><b>Microbiología</b></td><td><div class="con-unidad"><input class="entrada" id="ufc" inputmode="numeric" value="${S.esc(b.ufc ?? '')}" ${dis}><span>UFC/g</span></div></td><td>≤ ${S.num(e.ufc_max)} UFC/g</td><td id="c-ufc"></td></tr>
     </tbody></table></section>
 
-  <section class="tarjeta"><h2>Dictamen y firma</h2><p class="sub">Elegí el resultado que se aplicará al firmar el protocolo.</p>
+  <section class="tarjeta"><h2>Dictamen</h2>
     <div class="opciones-dictamen">
-      <label class="opcion-dictamen" data-d="APROBAR_LIBERAR"><b><input type="radio" name="dict" value="APROBAR_LIBERAR" ${dis}> Aprobado y liberado</b><span>Habilita la recepción en depósito. La OP continúa En control de calidad.</span></label>
-      <label class="opcion-dictamen" data-d="RECHAZAR_BLOQUEAR"><b><input type="radio" name="dict" value="RECHAZAR_BLOQUEAR" ${dis}> Rechazado y bloqueado</b><span>Bloquea el lote, pasa la OP a Rechazada (Scrap) y alerta a jefatura.</span></label></div>
-    <div class="campo"><label for="obs">Observaciones del técnico</label><textarea class="entrada" id="obs" rows="3" ${dis} placeholder="Describí el resultado del análisis. Es obligatorio si rechazás el lote.">${S.esc(b.observaciones ?? '')}</textarea></div>
-    <div class="rejilla col-2" style="margin-top:20px"><div class="campo"><label>Técnica responsable</label><div class="con-unidad"><input class="entrada" readonly value="${S.esc(u.nombre)} · ${S.esc(u.cargo)}"><span>${S.ico('candado', 16)}</span></div></div>
-      <div class="campo"><label>Fecha y hora de firma prevista</label><div class="con-unidad"><input class="entrada" readonly value="${S.fecha(new Date().toISOString())} · ${S.hora(new Date())}"><span>${S.ico('candado', 16)}</span></div></div></div>
-    <p class="sub" style="margin-top:16px;display:flex;gap:10px;align-items:center">${S.ico('escudo', 18)} Al guardar se genera el protocolo CC-${S.esc(lote.op_numero.slice(3))} con firma inmutable. La aprobación no finaliza la OP ni incrementa el stock vendible.</p></section>
+      <label class="opcion-dictamen" data-d="APROBAR_LIBERAR"><b><input type="radio" name="dict" value="APROBAR_LIBERAR" ${dis}> Aprobar y liberar</b><span>Depósito puede recibir el lote.</span></label>
+      <label class="opcion-dictamen" data-d="RECHAZAR_BLOQUEAR"><b><input type="radio" name="dict" value="RECHAZAR_BLOQUEAR" ${dis}> Rechazar y bloquear</b><span>La orden pasa a Rechazada (Scrap).</span></label></div>
+    <div class="campo"><label for="obs">Observaciones</label><textarea class="entrada" id="obs" rows="3" ${dis} placeholder="Obligatorias si rechazás el lote.">${S.esc(b.observaciones ?? '')}</textarea></div>
+    <p class="sub" style="margin-top:14px">Firma: ${S.esc(u.nombre)} · Una vez firmado, el protocolo no se puede modificar.</p></section>
 
   <div class="barra-acciones"><span class="nota" id="nota-dictamen"></span>
     <div class="botones"><button class="btn" id="btn-borrador" ${dis} title="${S.titleRol(['CALIDAD'])}">${S.ico('guardar')} Guardar borrador</button>
-      <button class="btn primario" id="btn-firmar" ${dis} title="${S.titleRol(['CALIDAD'])}">${S.ico('firma')} Guardar y firmar protocolo</button></div></div>`;
-
-  docs.innerHTML = `
-    <section class="aviso ambar" style="margin-bottom:22px">${S.ico('candado', 22)}<div><b>Bloqueo preventivo</b>Los lotes en cuarentena no pueden consumirse, venderse ni despacharse hasta su liberación.</div></section>
-    <section class="tarjeta"><h2>Documentos del lote</h2><div style="margin-top:10px">${lote.documentos.map((d) => `<div class="doc-item">${S.ico('documento')}<div><b>${S.esc(d.tipo)}</b><small>${S.esc(d.codigo)} · ${S.hora(d.fecha)}</small></div><span class="ext">${S.ico('externo', 16)}</span></div>`).join('')}</div></section>`;
+      <button class="btn primario" id="btn-firmar" ${dis} title="${S.titleRol(['CALIDAD'])}">${S.ico('firma')} Firmar protocolo</button></div></div>`;
 
   ['humedad', 'ph', 'ufc', 'aroma', 'color', 'sabor'].forEach((id) => document.getElementById(id).addEventListener('input', recalcular));
   document.querySelectorAll('[name=dict]').forEach((r) => r.addEventListener('change', () => { dictamen = r.value; recalcular(); }));
@@ -131,8 +117,7 @@ function recalcular() {
     el.classList.toggle('sel', activo);
     el.querySelector('input').checked = activo;
   });
-  const texto = dictamen === 'APROBAR_LIBERAR' ? 'Aprobado y liberado' : 'Rechazado y bloqueado';
-  document.getElementById('nota-dictamen').textContent = `Dictamen seleccionado: ${texto} · El lote permanece en cuarentena hasta la firma.`;
+  document.getElementById('nota-dictamen').textContent = 'El lote sigue en cuarentena hasta que firmes.';
 }
 
 function cuerpo() {
@@ -173,11 +158,10 @@ async function firmar() {
 /* ---------- Historial de dictámenes ---------- */
 function dibujarHistorial() {
   document.getElementById('historial').innerHTML = historial.length ? `
-    <section class="tarjeta"><h2>Dictámenes firmados</h2><p class="sub">Protocolos de calidad ya emitidos. Son inalterables.</p>
-    <table class="tabla" style="margin-top:14px"><thead><tr><th>Protocolo</th><th>Lote</th><th>Producto</th><th>Dictamen</th><th>Firmó</th><th></th></tr></thead><tbody>
-    ${historial.slice(0, 8).map((h) => `<tr><td><b>${S.esc(h.protocolo)}</b></td><td>${S.esc(h.lote_codigo)}</td><td>${S.esc(h.producto_nombre)}</td>
-      <td>${h.dictamen === 'APROBAR_LIBERAR' ? S.pill('Aprobado y liberado', 'verde') : S.pill('Rechazado y bloqueado', 'rojo')}</td>
-      <td>${S.esc(h.analista)}<span class="peq">${S.fechaHora(h.fecha)}</span></td><td><button class="enlace" data-protocolo="${h.lote_id}">Ver protocolo →</button></td></tr>`).join('')}</tbody></table></section>` : '';
+    <section class="tarjeta"><h2>Últimos dictámenes</h2>
+    <table class="tabla" style="margin-top:14px"><thead><tr><th>Protocolo</th><th>Producto</th><th>Dictamen</th><th></th></tr></thead><tbody>
+    ${historial.slice(0, 5).map((h) => `<tr><td><b>${S.esc(h.protocolo)}</b><span class="peq">${S.esc(h.lote_codigo)}</span></td><td>${S.esc(h.producto_nombre)}<span class="peq">${S.esc(h.analista)} · ${S.fechaHora(h.fecha)}</span></td>
+      <td>${h.dictamen === 'APROBAR_LIBERAR' ? S.pill('Aprobado', 'verde') : S.pill('Rechazado', 'rojo')}</td><td><button class="enlace" data-protocolo="${h.lote_id}">Ver →</button></td></tr>`).join('')}</tbody></table></section>` : '';
   document.querySelectorAll('[data-protocolo]').forEach((b) => { b.onclick = () => verProtocolo(Number(b.dataset.protocolo)); });
 }
 
@@ -204,14 +188,12 @@ async function verProtocolo(id) {
     await S.montar({ activo: 'calidad', miga: 'Calidad y trazabilidad / Lotes en cuarentena' });
     [pendientes, historial] = await Promise.all([S.get('/api/calidad/pendientes'), S.get('/api/calidad/historial')]);
     document.getElementById('pantalla').innerHTML = `
-    <div class="cabecera"><div><h1>Control de calidad</h1><p>Registrá las determinaciones y emití el dictamen del lote seleccionado.</p></div>
-      <div class="acciones"><button class="btn" id="btn-proc">${S.ico('libro')} Ver procedimientos</button></div></div>
+    <div class="cabecera"><div><h1>Control de calidad</h1><p>Cargá los resultados del lote y firmá el dictamen.</p></div></div>
     ${S.proceso(3)}
-    <div style="display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start">
-      <div><section class="tarjeta" id="lista-lotes"></section><div id="docs"></div></div>
+    <div class="calidad-grid">
+      <div><section class="tarjeta" id="lista-lotes"></section></div>
       <div id="detalle"></div></div>
     <div id="historial" style="margin-top:6px"></div>`;
-    document.getElementById('btn-proc').onclick = () => S.modal({ titulo: 'Procedimiento de control de calidad', html: '<ol><li>Seleccioná un lote en cuarentena.</li><li>Cargá humedad, pH, aroma, color, sabor y recuento microbiológico.</li><li>Verificá que cada resultado esté conforme con la especificación de ejemplo.</li><li>Elegí el dictamen y firmá el protocolo (R.BPM.01V01).</li></ol><p style="margin-top:10px">Los valores de especificación son <b>ilustrativos</b> de la demo, no límites normativos.</p>' });
     const id = Number(S.param('id'));
     lote = pendientes.find((l) => l.id === id) || pendientes[0] || null;
     if (lote && lote.borrador && lote.borrador.dictamen) dictamen = lote.borrador.dictamen;

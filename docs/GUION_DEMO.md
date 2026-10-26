@@ -2,11 +2,11 @@
 
 Antes de empezar: `npm start`, abrir http://localhost:3000 y, si ya probaste cosas, **Datos de ejemplo → Reiniciar la demo**.
 
-## 1. Panel general (rol: Martín Pérez)
-Mostrar los indicadores, la tabla de órdenes con sus estados, el gráfico y el cuadro **Requiere atención** (almidón y film bajo el mínimo). Clic en *Avisar a Compras*.
+## 1. Panel (rol: Martín Pérez)
+Mostrar los 3 indicadores, el cuadro **Para resolver** (almidón y film bajo el mínimo) y la tabla de órdenes con sus estados. Clic en *Avisar a Compras*.
 
 ## 2. Nueva orden (CU-P01)
-*Nueva orden de producción* → producto MRC01, 1.000 kg. Ver el cálculo de insumos y el cartel "Sin faltantes".
+*Nueva orden* → producto MRC01, 1.000 kg. Ver el cálculo de insumos y el cartel "Sin faltantes".
 Probar con una cantidad enorme (por ejemplo 100000): aparecen faltantes y **no deja planificar**; sí deja *Guardar borrador*.
 Volver a 1.000 kg → *Confirmar y planificar*.
 
@@ -19,7 +19,7 @@ Probar *Pausar línea* (con motivo) y *Reanudar*. Completar el peso neto (la mer
 Cambiar a **Diego Acosta** → Ingreso a depósito: el lote en cuarentena no aparece como recibible. En *Trazabilidad* buscar el lote → *Registrar despacho de ejemplo* → el sistema **lo bloquea**.
 
 ## 5. Control de calidad (CU-P03)
-Cambiar a **Lucía Benítez**. Elegir el lote, *Cargar resultados de ejemplo*, mirar los contrastes "Conforme".
+Cambiar a **Lucía Benítez**. Elegir el lote, *Cargar ejemplo*, mirar los contrastes "Conforme".
 Mostrar que con una humedad de 19 % no deja aprobar. *Guardar y firmar protocolo*.
 
 ## 6. Ingreso a depósito (CU-P04)

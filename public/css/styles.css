@@ -111,7 +111,7 @@ svg.ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-wi
   display: flex; align-items: center; padding: 0 32px; gap: 18px; position: relative;
 }
 .topbar .planta { display: flex; align-items: center; gap: 10px; }
-.topbar .fecha { color: var(--texto-suave); border-left: 1px solid var(--linea); padding-left: 18px; }
+.topbar .fecha { color: var(--texto-suave); }
 .topbar .derecha { margin-left: auto; display: flex; align-items: center; gap: 16px; }
 .chip-demo { background: var(--gris-suave); border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; color: var(--texto-suave); }
 .punto { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: middle; }
@@ -177,6 +177,7 @@ svg.ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-wi
 
 /* Indicadores del panel */
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+.kpis.kpis-3 { grid-template-columns: repeat(3, 1fr); }
 .kpi { background: var(--superficie); border: 1px solid var(--linea); border-radius: 12px; padding: 20px 22px; }
 .kpi.destacado { background: var(--ambar-suave); border-color: var(--ambar); }
 .kpi .t { color: var(--texto-suave); font-size: 14px; }
@@ -262,7 +263,14 @@ table.tabla { width: 100%; border-collapse: collapse; }
 .lista-prox .hora { color: var(--ambar-oscuro); font-weight: 700; width: 48px; flex: none; }
 .lista-prox small { color: var(--texto-suave); display: block; }
 .atencion-caja { background: var(--ambar-suave); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 14px; }
-.atencion-caja b { color: var(--ambar-oscuro); }
+.atencion-caja b { color: var(--ambar-oscuro); display: block; margin-bottom: 2px; }
+.atencion-caja.neutra { background: var(--superficie-2); }
+.atencion-caja.neutra b { color: var(--texto); }
+.atencion-caja .enlace { display: inline-block; margin-top: 6px; }
+.tarjeta.atencion { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+.tarjeta.atencion h2 { grid-column: 1 / -1; margin-bottom: 14px; }
+.tarjeta.atencion .atencion-caja { margin-bottom: 0; }
+.tarjeta.atencion .atencion-caja:only-of-type { grid-column: 1 / -1; }
 
 /* Verificaciones */
 .check { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
@@ -318,7 +326,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
 .vacio-grande { text-align: center; padding: 50px 20px; color: var(--texto-suave); }
 .vacio-grande h3 { color: var(--texto); font-size: 20px; margin-bottom: 6px; }
 
-.confirmacion { background: var(--ambar-suave); border: 1px solid var(--ambar-borde); border-radius: 10px; padding: 16px 20px; margin-bottom: 22px; color: var(--ambar-oscuro); display: flex; gap: 14px; }
+.confirmacion { margin-top: 22px; background: var(--ambar-suave); border: 1px solid var(--ambar-borde); border-radius: 10px; padding: 16px 20px; margin-bottom: 22px; color: var(--ambar-oscuro); display: flex; gap: 14px; }
 .confirmacion b { display: block; margin-bottom: 2px; }
 
 @media (max-width: 1100px) {
@@ -379,7 +387,8 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .topbar .derecha { gap: 10px; }
   .chip-demo { padding: 5px 9px; font-size: 12px; }
   .cabecera h1 { font-size: 28px; }
-  .kpis { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kpis, .kpis.kpis-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tarjeta.atencion { grid-template-columns: 1fr; gap: 12px; }
   .kpi .v { font-size: 28px; }
   .tarjeta { padding: 18px; }
   .rejilla.col-3, .rejilla.col-4, .metas { grid-template-columns: 1fr; }
@@ -388,3 +397,16 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .buscar-barra { flex-wrap: wrap; }
   .pestanas .buscador { margin-left: 0; width: 100%; }
 }
+
+/* Secciones plegables (detalle que no hace falta ver siempre) */
+.plegable { margin-top: 16px; }
+.plegable summary { cursor: pointer; color: var(--ambar-oscuro); font-weight: 600; font-size: 14px; padding: 6px 0; list-style: none; }
+.plegable summary::-webkit-details-marker { display: none; }
+.plegable summary::before { content: '▸ '; }
+.plegable[open] summary::before { content: '▾ '; }
+.plegable .tabla { margin-top: 8px; }
+
+.calidad-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+.calidad-grid > * { min-width: 0; }
+@media (max-width: 1100px) { .calidad-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) { .tarjeta { overflow-x: auto; } }

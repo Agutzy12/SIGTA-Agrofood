@@ -22,7 +22,7 @@ Navegador (public/)  ──pide──▶  routes.js  ──llama──▶  servi
 - `calidad.js` → CU-P03 (ensayo, dictamen, protocolo).
 - `deposito.js` → CU-P04 (ingreso, pallets, despacho).
 - `trazabilidad.js` → búsqueda y armado de la ficha del lote.
-- `panel.js` → indicadores del Panel general.
+- `panel.js` → indicadores y tabla del Panel.
 - `inventario.js` → stock, partidas y FEFO.
 - `comun.js` → errores y funciones de ayuda (redondeo, fechas, auditoría).
 

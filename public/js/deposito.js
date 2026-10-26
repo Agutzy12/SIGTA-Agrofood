@@ -25,7 +25,7 @@ function palletsPrevistos(bultos, kg) {
 /* ---------- Sin lote pendiente ---------- */
 async function sinPendientes() {
   document.getElementById('pantalla').innerHTML = `
-    <div class="cabecera"><div><h1>Ingreso a depósito y cierre de OP</h1><p>Verificá la recepción física del lote liberado antes de incorporarlo al stock vendible.</p></div></div>
+    <div class="cabecera"><div><h1>Ingreso a depósito</h1><p>Controlá lo recibido y asigná su ubicación.</p></div></div>
     <section class="tarjeta"><div class="vacio-grande"><h3>No hay lotes liberados esperando recepción</h3>Cuando Calidad apruebe un lote, aparece acá para su ingreso.<br><br><a class="btn" href="calidad.html">Ir a Control de calidad</a></div></section>
     <div id="stock"></div>`;
   await dibujarStock();
@@ -34,66 +34,59 @@ async function sinPendientes() {
 /* ---------- Pantalla de recepción ---------- */
 function dibujar() {
   const { op, lote, producto, certificado: cert } = rec;
-  const u = S.usuario();
   const puede = S.puede('DEPOSITO') && rec.habilitado;
   const dis = puede ? '' : 'disabled';
   const U = S.config.ubicaciones;
   document.getElementById('pantalla').innerHTML = `
-  <div class="cabecera"><div><h1>Ingreso a depósito y cierre de OP</h1><p>Verificá la recepción física del lote liberado antes de incorporarlo al stock vendible.</p></div>
+  <div class="cabecera"><div><h1>Ingreso a depósito</h1><p>Controlá lo recibido y asigná su ubicación.</p></div>
     <div class="acciones">${S.pill(rec.habilitado ? 'Recepción pendiente' : 'Recepción no habilitada', rec.habilitado ? 'ambar' : 'rojo')}</div></div>
   ${S.proceso(4)}
   ${rec.habilitado ? '' : `<div class="aviso rojo">${S.ico('candado', 22)}<div><b>No se puede recibir este lote</b>${S.esc(rec.motivo)}</div></div>`}
 
-  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>Lote habilitado para recepción</h2><p class="sub">${S.esc(producto.nombre)} · ${S.esc(producto.codigo)} · ${lote.bultos} bolsas de ${producto.presentacion_kg} kg</p></div>
+  <section class="tarjeta"><div class="tarjeta-cab"><div><h2>${S.esc(producto.nombre)}</h2><p class="sub">${lote.bultos} bolsas de ${producto.presentacion_kg} kg · lote liberado por Calidad</p></div>
       <button class="btn" id="btn-cambiar">${S.ico('chevAbajo', 16)} Cambiar lote</button></div>
-    <div class="metas" style="margin-top:0"><div class="dato"><small>Lote</small><b>${S.esc(lote.codigo)}</b></div><div class="dato"><small>Orden de producción</small><b>${S.esc(op.numero)}</b></div>
-      <div class="dato"><small>Cantidad elaborada</small><b>${S.kg(lote.cantidad_kg)} netos</b></div><div class="dato"><small>Vencimiento</small><b>${S.fecha(lote.vencimiento)}</b></div></div>
-    <div style="display:flex;gap:14px;align-items:center;margin-top:18px;flex-wrap:wrap;font-size:14px;color:var(--texto-suave)">Estado del lote ${S.pillLote(lote.estado)} Estado de OP ${S.pillOP(op.estado)} <span>La OP se cierra al confirmar el ingreso.</span></div></section>
+    <div class="rejilla col-3"><div class="dato"><small>Lote</small><b>${S.esc(lote.codigo)}</b></div><div class="dato"><small>Orden</small><b>${S.esc(op.numero)}</b></div>
+      <div class="dato"><small>Elaborado · Vencimiento</small><b>${S.kg(lote.cantidad_kg)} · ${S.fecha(lote.vencimiento)}</b></div></div></section>
 
   <div class="dos-col">
     <div>
-      <section class="tarjeta"><h2>Verificación física</h2><p class="sub">Contrastá los bultos recibidos contra el parte de elaboración.</p>
+      <section class="tarjeta"><h2>Verificación física</h2>
         <div class="rejilla col-3" style="margin-top:18px">
-          <div class="campo"><label>Bultos recibidos *</label><div class="con-unidad"><input class="entrada" id="bultos" inputmode="numeric" value="${lote.bultos}" ${dis}><span>bolsas</span></div></div>
-          <div class="campo"><label>Pallets recibidos *</label><div class="con-unidad"><input class="entrada" id="pallets" readonly><span>pallets</span></div></div>
-          <div class="campo"><label>Kilogramos conformes *</label><div class="con-unidad"><input class="entrada" id="kg" inputmode="decimal" value="${lote.cantidad_kg}" ${dis}><span>kg</span></div></div></div>
-        <table class="tabla" style="margin:22px 0"><thead><tr><th>Unidad logística</th><th>Bultos</th><th>Peso neto</th></tr></thead><tbody id="tabla-pallets"></tbody></table>
-        <div class="rejilla col-2"><div class="campo"><label>Bultos dañados *</label><div class="con-unidad"><input class="entrada" id="danados" inputmode="numeric" value="0" ${dis}><span>bolsas</span></div></div>
-          <div class="campo"><label>Merma secundaria *</label><div class="con-unidad"><input class="entrada" id="merma" inputmode="decimal" value="0" ${dis}><span>kg</span></div></div></div>
-        <div class="campo" style="margin-top:18px"><label>Justificación de daño o merma</label><input class="entrada" id="just" ${dis}><span class="ayuda" id="ayuda-just">Obligatoria cuando hay cantidad dañada o merma secundaria mayor que cero.</span></div></section>
+          <div class="campo"><label>Bolsas recibidas *</label><div class="con-unidad"><input class="entrada" id="bultos" inputmode="numeric" value="${lote.bultos}" ${dis}><span>bolsas</span></div></div>
+          <div class="campo"><label>Kg conformes *</label><div class="con-unidad"><input class="entrada" id="kg" inputmode="decimal" value="${lote.cantidad_kg}" ${dis}><span>kg</span></div></div>
+          <div class="campo"><label>Pallets</label><div class="con-unidad"><input class="entrada" id="pallets" readonly><span>pallets</span></div></div></div>
+        <details class="plegable"><summary>Ver detalle de pallets</summary>
+          <table class="tabla"><thead><tr><th>Pallet</th><th>Bolsas</th><th>Peso neto</th></tr></thead><tbody id="tabla-pallets"></tbody></table></details>
+        <div class="rejilla col-2" style="margin-top:20px"><div class="campo"><label>Bolsas dañadas</label><div class="con-unidad"><input class="entrada" id="danados" inputmode="numeric" value="0" ${dis}><span>bolsas</span></div></div>
+          <div class="campo"><label>Merma secundaria</label><div class="con-unidad"><input class="entrada" id="merma" inputmode="decimal" value="0" ${dis}><span>kg</span></div></div></div>
+        <div class="campo" id="campo-just" style="margin-top:18px;display:none"><label for="just">Justificación *</label><input class="entrada" id="just" ${dis}><span class="ayuda" id="ayuda-just">Obligatoria porque hay daño, merma o diferencia de kilos.</span></div></section>
 
-      <section class="tarjeta"><h2>Ubicación y registro</h2><p class="sub" id="sub-ubic"></p>
-        <div class="rejilla col-2" style="margin-top:18px">
-          <div class="campo"><label>Depósito *</label><select class="entrada" id="deposito" ${dis}>${U.depositos.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div>
-          <div class="campo"><label>Sector *</label><select class="entrada" id="sector" ${dis}>${U.sectores.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div></div>
+      <section class="tarjeta"><h2>Ubicación</h2><p class="sub" id="sub-ubic"></p>
         <div class="rejilla col-3" style="margin-top:18px">
+          <div class="campo"><label>Depósito *</label><select class="entrada" id="deposito" ${dis}>${U.depositos.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div>
+          <div class="campo"><label>Sector *</label><select class="entrada" id="sector" ${dis}>${U.sectores.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div>
+          <div class="campo" id="campo-camara" style="display:none"><label>Cámara</label><select class="entrada" id="camara" disabled>${U.camaras.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div></div>
+        <div class="rejilla col-2" style="margin-top:18px">
           <div class="campo"><label>Rack *</label><select class="entrada" id="rack" ${dis}>${U.racks.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div>
-          <div class="campo"><label>Nivel *</label><select class="entrada" id="nivel" ${dis}>${U.niveles.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div>
-          <div class="campo"><label>Cámara</label><select class="entrada" id="camara" disabled>${U.camaras.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div></div>
-        <div class="rejilla col-2" style="margin-top:20px"><div class="dato"><small>Responsable</small><b>${S.esc(u.nombre)} · ${S.esc(u.cargo)}</b></div>
-          <div class="dato"><small>Fecha y hora de recepción</small><b>${S.fecha(new Date().toISOString())} · ${S.hora(new Date())}</b></div></div></section>
+          <div class="campo"><label>Nivel *</label><select class="entrada" id="nivel" ${dis}>${U.niveles.map((d) => `<option>${S.esc(d)}</option>`).join('')}</select></div></div></section>
     </div>
 
     <div>
-      <section class="tarjeta"><h2>Certificado previo</h2><p class="sub">Control obligatorio</p>
+      <section class="tarjeta"><h2>Certificado de calidad</h2>
         ${cert ? `<div class="check" style="margin:14px 0">${S.ico('escudo')}<b style="color:var(--verde)">Liberación verificada</b></div>
-        <div class="dato" style="margin-bottom:12px"><small>Protocolo de calidad</small><b>${S.esc(cert.protocolo)}</b></div>
-        <div class="dato" style="margin-bottom:12px"><small>Formulario</small><b>${S.esc(cert.formulario)}</b></div>
+        <div class="dato" style="margin-bottom:12px"><small>Protocolo</small><b>${S.esc(cert.protocolo)}</b></div>
         <div class="dato" style="margin-bottom:16px"><small>Firmado por</small><b>${S.esc(cert.analista)} · ${S.fechaHora(cert.fecha)}</b></div>
-        <button class="btn" id="btn-protocolo">${S.ico('documento')} Ver protocolo firmado</button>` : '<p class="sub">Sin protocolo firmado.</p>'}</section>
-      <section class="tarjeta"><h2>Balance de ingreso</h2>
-        <div style="display:flex;justify-content:space-between;margin:14px 0"><span>Elaboración neta</span><b>${S.kg(lote.cantidad_kg)}</b></div>
-        <div style="display:flex;justify-content:space-between;margin:14px 0"><span>Merma secundaria</span><b id="b-merma"></b></div>
-        <div class="atencion-caja" style="margin:16px 0"><small style="color:var(--ambar-oscuro)">Incremento de stock vendible</small><div style="font-size:34px;font-weight:600;color:var(--ambar-oscuro)" id="b-inc"></div><small style="color:var(--ambar-oscuro)" id="b-det"></small></div>
-        <p class="sub" style="font-size:13px">Comprobante al confirmar: ${S.esc(rec.comprobante)}. Hasta entonces no se incrementa el stock.</p></section>
-      <section class="aviso gris">${S.ico('candado', 22)}<div><b>Sólo lotes liberados</b>No se permite recibir lotes en cuarentena, rechazados o sin protocolo firmado.</div></section>
+        <button class="btn" id="btn-protocolo">${S.ico('documento')} Ver protocolo</button>` : '<p class="sub">Sin protocolo firmado.</p>'}</section>
+      <section class="tarjeta"><h2>Ingreso al stock</h2>
+        <div class="atencion-caja" style="margin:16px 0 0"><small style="color:var(--ambar-oscuro)">Stock vendible a incrementar</small><div style="font-size:34px;font-weight:600;color:var(--ambar-oscuro)" id="b-inc"></div><small style="color:var(--ambar-oscuro)" id="b-det"></small></div>
+        <span id="b-merma" hidden></span></section>
     </div>
   </div>
 
   <div class="confirmacion" id="resultado"></div>
   <div class="barra-acciones"><span class="nota" id="nota-control"></span>
-    <div class="botones"><a class="btn" href="deposito.html">Volver a pendientes</a>
-      <button class="btn primario" id="btn-confirmar" ${dis} title="${S.titleRol(['DEPOSITO'])}">${S.ico('check')} Confirmar ingreso y cerrar OP</button></div></div>
+    <div class="botones">
+      <button class="btn primario" id="btn-confirmar" ${dis} title="${S.titleRol(['DEPOSITO'])}">${S.ico('check')} Confirmar ingreso</button></div></div>
   <div id="stock" style="margin-top:22px"></div>`;
 
   ['bultos', 'kg', 'danados', 'merma', 'just', 'sector', 'rack', 'nivel', 'deposito'].forEach((id) => document.getElementById(id).addEventListener('input', recalcular));
@@ -116,25 +109,27 @@ function recalcular() {
   document.getElementById('pallets').value = lista.length;
   document.getElementById('tabla-pallets').innerHTML = lista.map((p) => `<tr><td>${S.esc(p.codigo)}</td><td>${p.bultos} × ${rec.producto.presentacion_kg} kg</td><td>${S.kg(p.kg)}</td></tr>`).join('')
     || '<tr><td colspan="3" style="color:var(--texto-suave)">Ingresá los bultos recibidos.</td></tr>';
-  document.getElementById('sub-ubic').textContent = `Ubicación de almacenamiento asignada ${lista.length > 1 ? 'a todos los pallets' : 'al pallet'}.`;
+  document.getElementById('sub-ubic').textContent = `Se aplica ${lista.length > 1 ? 'a todos los pallets' : 'al pallet'}.`;
 
   const diferencia = Math.round((lote.cantidad_kg - kg - merma) * 100) / 100;
   const hayDesvio = danados > 0 || merma > 0 || diferencia > 0;
   const just = document.getElementById('just');
-  just.placeholder = hayDesvio ? 'Explicá el daño, la merma o la diferencia de kilos' : 'No aplica: recepción completa, sin daños ni merma secundaria.';
+  just.placeholder = 'Explicá el daño, la merma o la diferencia de kilos';
+  document.getElementById('campo-just').style.display = hayDesvio ? '' : 'none';
   document.getElementById('ayuda-just').style.color = hayDesvio && !just.value.trim() ? 'var(--rojo)' : '';
 
   // Cámara sólo en sectores con frío
   const sector = document.getElementById('sector').value;
   const lleva = S.config.ubicaciones.sectoresConCamara.includes(sector);
   document.getElementById('camara').disabled = !(lleva && S.puede('DEPOSITO') && rec.habilitado);
+  document.getElementById('campo-camara').style.display = lleva ? '' : 'none';
 
   document.getElementById('b-merma').textContent = S.kg(merma);
   document.getElementById('b-inc').textContent = `+${S.num(kg, Number.isInteger(kg) ? 0 : 1)} kg`;
   document.getElementById('b-det').textContent = `${bultos} bolsas · ${lista.length} pallets · ${hayDesvio ? `Diferencia ${S.kg(Math.max(0, diferencia))}` : 'Sin diferencias'}`;
   const d = document.getElementById('deposito').value, rack = document.getElementById('rack').value, nivel = document.getElementById('nivel').value;
-  document.getElementById('resultado').innerHTML = `${S.ico('caja', 22)}<div><b>Resultado de la confirmación</b>Se incorporarán ${S.num(kg)} kg al stock vendible en PT / ${S.esc(sector.split(' ·')[0])} / ${S.esc(rack)} / ${S.esc(nivel)}. La OP pasará a Finalizada y se emitirá el comprobante de recepción. El lote conservará su estado Aprobado y liberado.</div>`;
-  document.getElementById('nota-control').textContent = hayDesvio ? 'Hay diferencias o daños: se exige justificación para confirmar.' : 'Control completo · Certificado válido y cantidades físicas conciliadas.';
+  document.getElementById('resultado').innerHTML = `${S.ico('caja', 22)}<div><b>Al confirmar, la orden se cierra</b>Se suman ${S.num(kg)} kg al stock vendible en ${S.esc(sector.split(' ·')[0])} / ${S.esc(rack)} / ${S.esc(nivel)} y se emite el comprobante.</div>`;
+  document.getElementById('nota-control').textContent = hayDesvio ? 'Hay diferencias: escribí la justificación para confirmar.' : 'Todo conforme.';
 }
 
 async function confirmar() {
@@ -183,7 +178,7 @@ async function dibujarStock() {
   try {
     const todo = await S.get('/api/stock-pt');
     const stock = todo.slice(-6).reverse();   // los 6 ingresos más recientes
-    cont.innerHTML = `<section class="tarjeta"><div class="tarjeta-cab"><div><h2>Stock de producto terminado</h2><p class="sub">Últimos ingresos · Sólo los lotes aprobados y liberados pueden despacharse.</p></div></div>
+    cont.innerHTML = `<section class="tarjeta"><div class="tarjeta-cab"><div><h2>Stock de producto terminado</h2><p class="sub">Últimos ingresos</p></div></div>
       ${stock.length ? `<table class="tabla"><thead><tr><th>Lote</th><th>Producto</th><th>Ubicación</th><th>Stock</th><th>Vence</th><th></th></tr></thead><tbody>
       ${stock.map((s) => `<tr><td><b>${S.esc(s.lote_codigo)}</b></td><td>${S.esc(s.producto_nombre)}</td><td>${S.esc(s.sector.split(' ·')[0])} / ${S.esc(s.rack)} / ${S.esc(s.nivel)}</td><td class="num">${S.kg(s.cantidad_kg)}</td><td>${S.fecha(s.vencimiento)}</td>
       <td><button class="enlace" data-despacho="${s.lote_id}" data-cod="${S.esc(s.lote_codigo)}" data-max="${s.cantidad_kg}">Registrar despacho →</button></td></tr>`).join('')}</tbody></table>` : '<div class="vacio-grande">Todavía no hay stock vendible.</div>'}</section>`;

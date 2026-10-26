@@ -45,3 +45,4 @@ Marcá con `[x]` a medida que se completan.
 - [x] `npm test` en verde
 - [ ] Recorrer el guion de la demo completo en el navegador
 - [ ] Revisar que no queden datos ni claves personales en el repositorio
+- [x] Simplificación de interfaces: menú sin ítems vacíos, panel con 3 indicadores, menos secciones por pantalla, detalle plegable, textos más cortos

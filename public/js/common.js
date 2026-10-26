@@ -204,14 +204,14 @@ S.pasoDeOP = (estado, loteEstado) => {
 
 /* ---------- Estructura de la página: menú lateral + barra superior ---------- */
 const MENU = [
-  { id: 'panel', texto: 'Panel general', icono: 'panel', url: 'index.html' },
-  { id: 'ordenes', texto: 'Órdenes de producción', icono: 'ordenes', url: 'orden-nueva.html' },
+  { id: 'panel', texto: 'Panel', icono: 'panel', url: 'index.html' },
+  { id: 'ordenes', texto: 'Nueva orden', icono: 'ordenes', url: 'orden-nueva.html' },
   { id: 'ejecucion', texto: 'Ejecución y consumo', icono: 'ejecucion', url: 'ejecucion.html' },
   { id: 'calidad', texto: 'Control de calidad', icono: 'calidad', url: 'calidad.html' },
   { id: 'deposito', texto: 'Ingreso a depósito', icono: 'deposito', url: 'deposito.html' },
   { id: 'trazabilidad', texto: 'Trazabilidad de lote', icono: 'trazabilidad', url: 'trazabilidad.html' },
 ];
-const MENU_ADMIN = [
+const _MENU_ADMIN = [
   { texto: 'Compras', icono: 'compras' }, { texto: 'Inventario', icono: 'inventario' },
   { texto: 'Ventas y despacho', icono: 'ventas' }, { texto: 'Reportes', icono: 'reportes' },
 ];
@@ -231,18 +231,14 @@ S.montar = async ({ activo, miga }) => {
       <div class="marca">${LOGO}<div class="sigta"><b>SIGTA</b><span>GESTIÓN<br>INDUSTRIAL</span></div></div>
       <div class="menu-titulo">Producción y trazabilidad</div>
       <nav class="menu">${MENU.map((m) => `<a href="${m.url}" class="${m.id === activo ? 'activo' : ''}">${S.ico(m.icono)}<span>${m.texto}</span></a>`).join('')}</nav>
-      <div class="menu-titulo">Administración</div>
-      <nav class="menu">${MENU_ADMIN.map((m) => `<button class="item apagado" data-fuera="${m.texto}">${S.ico(m.icono)}<span>${m.texto}</span></button>`).join('')}</nav>
       <div class="espacio"></div>
-      <div class="planta-caja"><b>Agrifood Argentina S.A.</b><small>Planta industrial · Argentina</small><span class="pill verde"><span class="punto"></span>Sistema disponible</span></div>
       <button class="ayuda" id="btn-ayuda">${S.ico('ayuda')}<span>Ayuda y procedimientos</span></button>
       <div class="version">SIGTA · v1.0</div>
     </aside>
     <div class="principal">
       <header class="topbar">
         <button class="btn-icono btn-menu" id="btn-menu" aria-label="Abrir menú">${S.ico('menu')}</button>
-        <div class="planta">${S.ico('planta')}<span>${S.esc(config.planta)}</span>${S.ico('chevAbajo', 16)}</div>
-        <div class="fecha">${S.fechaLarga()}</div>
+        <div class="fecha">${S.esc(config.planta)} · ${S.fechaLarga()}</div>
         <div class="derecha">
           <button class="chip-demo" id="btn-demo"><span class="punto"></span>Datos de ejemplo</button>
           <button class="btn-icono" id="btn-tema" type="button"></button>
@@ -251,13 +247,9 @@ S.montar = async ({ activo, miga }) => {
         </div>
       </header>
       <main class="contenido"><div class="miga">${S.esc(miga)}</div><div id="pantalla"><div class="cargando">Cargando…</div></div></main>
-      <footer class="pie"><span>Sistema Integral de Gestión y Trazabilidad Alimentaria</span><span>Agrifood Argentina S.A. · Uso interno</span></footer>
     </div>
   </div>`;
 
-  document.querySelectorAll('[data-fuera]').forEach((b) => {
-    b.onclick = () => S.aviso(`"${b.dataset.fuera}" pertenece a otro módulo de SIGTA y no forma parte de esta demo.`);
-  });
   document.getElementById('btn-ayuda').onclick = S.verAyuda;
   document.getElementById('btn-tema').onclick = S.cambiarTema;
   S.pintarBotonTema();

@@ -11,7 +11,7 @@ Esta demo cubre el módulo **Gestión de Producción y Trazabilidad Industrial**
 | CU-P02 Registrar ejecución y consumo | Ejecución y consumo | Producción |
 | CU-P03 Registrar control de calidad de lote | Control de calidad | Calidad |
 | CU-P04 Registrar ingreso de PT y cierre de OP | Ingreso a depósito | Depósito |
-| Consulta | Panel general · Trazabilidad de lote | Todos (Dirección: sólo lectura) |
+| Consulta | Panel · Trazabilidad de lote | Todos (Dirección: sólo lectura) |
 
 > Los datos y los valores de especificación son **de ejemplo**: no son límites normativos.
 
