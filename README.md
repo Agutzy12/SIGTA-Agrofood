@@ -17,7 +17,7 @@ Esta demo cubre el módulo **Gestión de Producción y Trazabilidad Industrial**
 
 ## Cómo correrla
 
-Necesitás **Node.js 22.5 o superior** (usa el SQLite que ya trae Node, no hay que instalar una base de datos).
+Necesitás **Node.js 22.13 o superior** (usa el SQLite que ya trae Node, no hay que instalar una base de datos).
 
 ```bash
 npm install        # instala Express
@@ -31,7 +31,7 @@ Pasos en Windows (CMD o PowerShell), partiendo de cero:
 ```
 git clone -b developer https://github.com/Agutzy12/SIGTA-Agrofood.git
 cd SIGTA-Agrofood
-node -v            # tiene que decir v22.5 o más
+node -v            # tiene que decir v22.13 o más (si dice menos, instalá la versión LTS desde https://nodejs.org)
 npm install
 npm start
 ```
