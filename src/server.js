@@ -1,4 +1,11 @@
 'use strict';
+// Esta demo usa SQLite integrado en Node (node:sqlite), disponible desde Node 22.5.
+const [mayor, menor] = process.versions.node.split('.').map(Number);
+if (mayor < 22 || (mayor === 22 && menor < 5)) {
+  console.error(`SIGTA necesita Node 22.5 o superior y tenés Node ${process.versions.node}.\nDescargá la versión LTS desde https://nodejs.org y volvé a probar.`);
+  process.exit(1);
+}
+
 const express = require('express');
 const path = require('path');
 const { handle } = require('./routes');

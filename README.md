@@ -24,6 +24,20 @@ npm install        # instala Express
 npm start          # abre http://localhost:3000
 ```
 
+**Todo está en la raíz del repo**: un solo `package.json`, sin carpetas `client/` ni `server/`. El servidor entrega las pantallas (`public/`) y la API (`/api`) en el mismo puerto, así que se corre un solo comando en una sola terminal.
+
+Pasos en Windows (CMD o PowerShell), partiendo de cero:
+
+```
+git clone -b developer https://github.com/Agutzy12/SIGTA-Agrofood.git
+cd SIGTA-Agrofood
+node -v            # tiene que decir v22.5 o más
+npm install
+npm start
+```
+
+Después abrí **http://localhost:3000**. Usá siempre `npm` (no mezcles con pnpm). Si instalaste antes con otro gestor y falla, borrá la carpeta `node_modules` y volvé a correr `npm install`. Los avisos `npm warn` no son errores.
+
 La primera vez se crea la base (`data/sigta.db`) con datos de ejemplo. Otros comandos:
 
 ```bash
