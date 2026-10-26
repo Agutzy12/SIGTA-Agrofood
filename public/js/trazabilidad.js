@@ -130,6 +130,7 @@ async function escanear() {
   try {
     await S.montar({ activo: 'trazabilidad', miga: 'Calidad y trazabilidad / Consulta de lote' });
     document.getElementById('pantalla').innerHTML = `
+    <div class="solo-impresion"><img src="img/logo.png" alt="Agrifood Argentina"><div style="text-align:right"><b>Ficha de trazabilidad de lote</b><br><small>Emitida el ${S.fecha(new Date().toISOString())} · ${S.hora(new Date())} · Datos de ejemplo</small></div></div>
     <div class="cabecera"><div><h1>Trazabilidad de lote</h1><p>Reconstruí el recorrido completo, desde los insumos hasta su ubicación y destino.</p></div>
       <div class="acciones"><button class="btn" id="btn-exportar">${S.ico('descargar')} Exportar ficha</button></div></div>
     <form class="buscar-barra" id="form-buscar">${S.ico('trazabilidad', 26)}<div class="caja"><small>Buscar por lote, orden o identificador</small><input id="q" autocomplete="off" placeholder="Ej.: L-MRC01-202644-01 u OP-2026-00128"></div>

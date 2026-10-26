@@ -36,6 +36,8 @@ También podés reiniciar los datos desde la pantalla: clic en **"Datos de ejemp
 
 ## Cómo usarla
 
+El botón del sol/luna (barra superior) cambia entre **modo claro** (por defecto) y **modo oscuro**; se recuerda en tu navegador.
+
 Arriba a la derecha, clic en tu nombre para **cambiar de rol** (no hay contraseñas en la demo):
 
 - **Martín Pérez** · Responsable de producción → crea órdenes, elabora y pausa la línea.

@@ -4,6 +4,26 @@
    S.api(...), S.kg(...), S.montar(...), S.modal(...), S.aviso(...)  */
 const S = {};
 
+/* ---------- Tema claro / oscuro ---------- */
+// Por defecto es claro. La elección se recuerda en el navegador (si no hay almacenamiento, simplemente no se recuerda).
+S.tema = () => { try { return localStorage.getItem('sigta_tema') === 'oscuro' ? 'oscuro' : 'claro'; } catch { return 'claro'; } };
+S.aplicarTema = (tema) => { document.documentElement.dataset.tema = tema; };
+S.pintarBotonTema = () => {
+  const b = document.getElementById('btn-tema');
+  if (!b) return;
+  const oscuro = S.tema() === 'oscuro';
+  b.innerHTML = S.ico(oscuro ? 'sol' : 'luna');
+  b.title = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+  b.setAttribute('aria-label', b.title);
+};
+S.cambiarTema = () => {
+  const nuevo = S.tema() === 'oscuro' ? 'claro' : 'oscuro';
+  try { localStorage.setItem('sigta_tema', nuevo); } catch { /* sin almacenamiento */ }
+  S.aplicarTema(nuevo);
+  S.pintarBotonTema();
+};
+S.aplicarTema(S.tema());
+
 /* ---------- Íconos (SVG simples, todos del mismo estilo) ---------- */
 const ICONOS = {
   panel: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
@@ -47,6 +67,9 @@ const ICONOS = {
   trigo: '<path d="M12 21V9M12 9c-3 0-4-2-4-5 3 0 4 2 4 5zM12 9c3 0 4-2 4-5-3 0-4 2-4 5zM12 15c-3 0-4-2-4-5 3 0 4 2 4 5zM12 15c3 0 4-2 4-5-3 0-4 2-4 5z"/>',
   camion: '<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+  sol: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
+  luna: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
 S.ico = (nombre, tamano) => {
@@ -148,8 +171,11 @@ S.modal = ({ titulo, html, botones = [{ texto: 'Cerrar' }], ancho }) => {
     };
     pie.appendChild(el);
   });
+  cortina.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+  cortina.tabIndex = -1;
   cortina.addEventListener('mousedown', (e) => { if (e.target === cortina) cerrar(); });
   document.body.appendChild(cortina);
+  cortina.focus();
   return cerrar;
 };
 S.confirmar = (titulo, texto, textoBoton = 'Confirmar') => new Promise((resolver) => {
@@ -189,10 +215,7 @@ const MENU_ADMIN = [
   { texto: 'Compras', icono: 'compras' }, { texto: 'Inventario', icono: 'inventario' },
   { texto: 'Ventas y despacho', icono: 'ventas' }, { texto: 'Reportes', icono: 'reportes' },
 ];
-const LOGO = `<svg width="190" height="58" viewBox="0 0 190 58" role="img" aria-label="Agrifood Argentina (logo de ejemplo)">
-  <g transform="translate(2,4)"><circle cx="24" cy="30" r="11" fill="#7cb342"/><path d="M24 3v10M9 9l7 8M39 9l-7 8M3 22l10 3M45 22l-10 3" stroke="#ffc107" stroke-width="3.5" stroke-linecap="round"/><path d="M8 34c10 8 22 8 32 0-4 12-28 12-32 0z" fill="#43a047"/></g>
-  <text x="56" y="30" font-family="Source Sans 3, Segoe UI, sans-serif" font-size="25" font-weight="800" fill="#2e7d32">AGRI<tspan fill="#7cb342">FOOD</tspan></text>
-  <text x="58" y="43" font-family="Source Sans 3, Segoe UI, sans-serif" font-size="9" fill="#2e7d32">ARGENTINA</text></svg>`;
+const LOGO = '<img class="logo" src="img/logo.png" alt="Agrifood Argentina" width="176" height="61">';
 
 /** Arma el esqueleto de la pantalla. `activo` = id del menú; `miga` = texto del camino; devuelve el contenedor donde dibujar. */
 S.montar = async ({ activo, miga }) => {
@@ -202,8 +225,9 @@ S.montar = async ({ activo, miga }) => {
   const u = S.usuario();
   const iniciales = u.iniciales || u.nombre.split(' ').map((p) => p[0]).join('');
   document.body.innerHTML = `
-  <div class="app">
-    <aside class="sidebar">
+  <div class="app" id="app">
+    <div class="sidebar-fondo" id="sidebar-fondo"></div>
+    <aside class="sidebar" aria-label="Menú principal">
       <div class="marca">${LOGO}<div class="sigta"><b>SIGTA</b><span>GESTIÓN<br>INDUSTRIAL</span></div></div>
       <div class="menu-titulo">Producción y trazabilidad</div>
       <nav class="menu">${MENU.map((m) => `<a href="${m.url}" class="${m.id === activo ? 'activo' : ''}">${S.ico(m.icono)}<span>${m.texto}</span></a>`).join('')}</nav>
@@ -216,10 +240,12 @@ S.montar = async ({ activo, miga }) => {
     </aside>
     <div class="principal">
       <header class="topbar">
+        <button class="btn-icono btn-menu" id="btn-menu" aria-label="Abrir menú">${S.ico('menu')}</button>
         <div class="planta">${S.ico('planta')}<span>${S.esc(config.planta)}</span>${S.ico('chevAbajo', 16)}</div>
         <div class="fecha">${S.fechaLarga()}</div>
         <div class="derecha">
           <button class="chip-demo" id="btn-demo"><span class="punto"></span>Datos de ejemplo</button>
+          <button class="btn-icono" id="btn-tema" type="button"></button>
           <button class="campana" id="btn-campana" aria-label="Alertas">${S.ico('campana')}</button>
           <button class="usuario" id="btn-usuario"><span><b>${S.esc(u.nombre)}</b><small>${S.esc(u.cargo)}</small></span><span class="avatar">${S.esc(iniciales)}</span></button>
         </div>
@@ -233,6 +259,11 @@ S.montar = async ({ activo, miga }) => {
     b.onclick = () => S.aviso(`"${b.dataset.fuera}" pertenece a otro módulo de SIGTA y no forma parte de esta demo.`);
   });
   document.getElementById('btn-ayuda').onclick = S.verAyuda;
+  document.getElementById('btn-tema').onclick = S.cambiarTema;
+  S.pintarBotonTema();
+  const alternarMenu = () => document.getElementById('app').classList.toggle('menu-abierto');
+  document.getElementById('btn-menu').onclick = alternarMenu;
+  document.getElementById('sidebar-fondo').onclick = alternarMenu;
   document.getElementById('btn-usuario').onclick = (e) => desplegable(e, menuUsuarios());
   document.getElementById('btn-demo').onclick = (e) => desplegable(e, menuDemo());
   document.getElementById('btn-campana').onclick = (e) => alertas(e);

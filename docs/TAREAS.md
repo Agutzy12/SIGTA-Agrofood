@@ -15,12 +15,16 @@ Marcá con `[x]` a medida que se completan.
 - [x] Panel general de producción
 - [x] Trazabilidad de lote (hacia atrás, hacia adelante, historial)
 - [x] Cambio de rol, reponer stock y reiniciar demo
+- [x] Logo real de Agrifood y favicon
+- [x] Modo claro (por defecto) y modo oscuro con botón en la barra superior
+- [x] Versión adaptable a celular (menú lateral desplegable)
+- [x] Cabecera con logo al imprimir la ficha de trazabilidad
 - [x] 12 pruebas automáticas del flujo completo
 - [x] README, guía del código y guion de la demo
 
 ## Para seguir (tesis y programa final)
 
-- [ ] Reemplazar el logo de ejemplo por el logo oficial de Agrifood (`public/js/common.js`, constante `LOGO`)
+- [ ] Reemplazar `public/img/logo.png` por el logo original en SVG o PNG de mayor resolución (hoy está recortado de una captura de la web)
 - [ ] Login real con usuarios y contraseñas (hoy se elige el rol)
 - [ ] Reemplazar los valores de especificación de ejemplo por los reales de Calidad
 - [ ] Revisar con Agrifood los códigos (OP, lote, protocolo, pallet) y las vidas útiles
