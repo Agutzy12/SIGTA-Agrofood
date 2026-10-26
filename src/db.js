@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Base de datos SIGTA (SQLite embebido con el módulo `node:sqlite`, Node >= 22.5).
+ * Base de datos SIGTA (SQLite embebido con el módulo `node:sqlite`, Node >= 22.13).
  * Acá sólo está la conexión, las transacciones y el esquema (las tablas).
  * Los datos de ejemplo se cargan en seed.js.
  */
