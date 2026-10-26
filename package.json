@@ -1,0 +1,20 @@
+{
+  "name": "sigta-demo",
+  "version": "1.0.0",
+  "description": "Demo del Sistema Integral de Gestión y Trazabilidad Alimentaria (SIGTA) - Módulo de Gestión de Producción y Trazabilidad Industrial - Agrifood Argentina S.A.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "author": "Benitez Agustin",
+  "license": "MIT"
+}
