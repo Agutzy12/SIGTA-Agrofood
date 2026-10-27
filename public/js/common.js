@@ -7,7 +7,11 @@ const S = {};
 /* ---------- Tema claro / oscuro ---------- */
 // Por defecto es claro. La elección se recuerda en el navegador (si no hay almacenamiento, simplemente no se recuerda).
 S.tema = () => { try { return localStorage.getItem('sigta_tema') === 'oscuro' ? 'oscuro' : 'claro'; } catch { return 'claro'; } };
-S.aplicarTema = (tema) => { document.documentElement.dataset.tema = tema; };
+S.aplicarTema = (tema) => {
+  document.documentElement.dataset.tema = tema;
+  const logo = document.querySelector('.marca .logo');   // en oscuro se usa el logo con fondo transparente
+  if (logo) logo.src = tema === 'oscuro' ? 'img/logo-oscuro.png' : 'img/logo.png';
+};
 S.pintarBotonTema = () => {
   const b = document.getElementById('btn-tema');
   if (!b) return;
@@ -19,7 +23,9 @@ S.pintarBotonTema = () => {
 S.cambiarTema = () => {
   const nuevo = S.tema() === 'oscuro' ? 'claro' : 'oscuro';
   try { localStorage.setItem('sigta_tema', nuevo); } catch { /* sin almacenamiento */ }
+  document.documentElement.classList.add('cambiando-tema');   // fundido suave de colores
   S.aplicarTema(nuevo);
+  setTimeout(() => document.documentElement.classList.remove('cambiando-tema'), 450);
   S.pintarBotonTema();
 };
 S.aplicarTema(S.tema());
@@ -36,6 +42,7 @@ const ICONOS = {
   inventario: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
   ventas: '<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
   reportes: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  usuarios: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 010 7M18 14.5c2.2.6 3.5 2.4 3.5 5.5"/>',
   ayuda: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>',
   planta: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
   chevAbajo: '<path d="M6 9l6 6 6-6"/>',
@@ -211,17 +218,41 @@ const MENU = [
   { id: 'deposito', texto: 'Ingreso a depósito', icono: 'deposito', url: 'deposito.html' },
   { id: 'trazabilidad', texto: 'Trazabilidad de lote', icono: 'trazabilidad', url: 'trazabilidad.html' },
 ];
-const _MENU_ADMIN = [
-  { texto: 'Compras', icono: 'compras' }, { texto: 'Inventario', icono: 'inventario' },
-  { texto: 'Ventas y despacho', icono: 'ventas' }, { texto: 'Reportes', icono: 'reportes' },
+/** Módulos del informe que se construirán para la tesis final. Hoy sólo se muestran. */
+const MENU_PROXIMO = [
+  { texto: 'Usuarios y permisos', icono: 'usuarios', resumen: 'Control de accesos por perfil y registro de todo lo que hace cada usuario.',
+    puntos: ['Perfiles: Administrador, Supervisor, Operario y Técnico de Calidad', 'Inicio de sesión real', 'Registro de auditoría de operaciones'] },
+  { texto: 'Proveedores y compras', icono: 'compras', resumen: 'Todo el circuito de abastecimiento, desde la necesidad hasta el pago.',
+    puntos: ['Fichas de proveedores', 'Comparativa de presupuestos', 'Órdenes de compra y cuentas a pagar', 'Ingreso de materia prima con control de calidad'] },
+  { texto: 'Stock e inventarios', icono: 'inventario', resumen: 'Existencias en tiempo real en todos los depósitos.',
+    puntos: ['Multi-depósito, silos y racks', 'Alarmas de stock mínimo', 'Auditoría cíclica con recuento a ciegas y ajustes autorizados'] },
+  { texto: 'Clientes y ventas', icono: 'ventas', resumen: 'De los pedidos mayoristas al despacho, con el bloqueo de lotes ya funcionando.',
+    puntos: ['Pedidos y verificación de crédito y stock', 'Remitos y hojas de ruta', 'Facturación electrónica'] },
+  { texto: 'Reportes', icono: 'reportes', resumen: 'Tableros para decidir con datos.',
+    puntos: ['Productividad y mermas', 'Rotación de inventarios', 'Compras y eficiencia operativa'] },
 ];
+S.verProximo = (m) => S.modal({
+  titulo: m.texto, ancho: 520,
+  html: `<p>${S.pill('Próximamente', 'ambar')}</p><p style="margin:14px 0 10px">${S.esc(m.resumen)}</p>
+    <ul class="lista-pronto">${m.puntos.map((x) => `<li>${S.esc(x)}</li>`).join('')}</ul>
+    <p class="sub" style="margin-top:14px;color:var(--texto-suave)">Forma parte de la versión completa de SIGTA y todavía no está en esta demo.</p>`,
+});
 const LOGO = '<img class="logo" src="img/logo.png" alt="Agrifood Argentina" width="176" height="57">';
 
 /** Arma el esqueleto de la pantalla. `activo` = id del menú; `miga` = texto del camino; devuelve el contenedor donde dibujar. */
 S.montar = async ({ activo, miga }) => {
-  S.usuarios = await fetch('/api/usuarios').then((r) => r.json());
-  const config = await fetch('/api/config').then((r) => r.json());
+  // Los usuarios y la configuración casi no cambian: se guardan en la sesión para dibujar el menú sin esperar al servidor.
+  let guardado = null;
+  try { guardado = JSON.parse(sessionStorage.getItem('sigta_base')); } catch { /* sin caché */ }
+  if (!guardado) {
+    guardado = { usuarios: await fetch('/api/usuarios').then((r) => r.json()), config: await fetch('/api/config').then((r) => r.json()) };
+    try { sessionStorage.setItem('sigta_base', JSON.stringify(guardado)); } catch { /* sin caché */ }
+  }
+  S.usuarios = guardado.usuarios;
+  const config = guardado.config;
   S.config = config;
+  document.documentElement.classList.add('entrando');            // activa los fundidos de entrada
+  setTimeout(() => document.documentElement.classList.remove('entrando'), 1100);
   const u = S.usuario();
   const iniciales = u.iniciales || u.nombre.split(' ').map((p) => p[0]).join('');
   document.body.innerHTML = `
@@ -231,6 +262,8 @@ S.montar = async ({ activo, miga }) => {
       <div class="marca">${LOGO}<div class="sigta"><b>SIGTA</b><span>GESTIÓN<br>INDUSTRIAL</span></div></div>
       <div class="menu-titulo">Producción y trazabilidad</div>
       <nav class="menu">${MENU.map((m) => `<a href="${m.url}" class="${m.id === activo ? 'activo' : ''}">${S.ico(m.icono)}<span>${m.texto}</span></a>`).join('')}</nav>
+      <div class="menu-titulo">Próximamente</div>
+      <nav class="menu">${MENU_PROXIMO.map((m, i) => `<button class="item apagado" data-pronto="${i}">${S.ico(m.icono)}<span>${m.texto}</span></button>`).join('')}</nav>
       <div class="espacio"></div>
       <button class="ayuda" id="btn-ayuda">${S.ico('ayuda')}<span>Ayuda y procedimientos</span></button>
       <div class="version">SIGTA · v1.0</div>
@@ -250,9 +283,11 @@ S.montar = async ({ activo, miga }) => {
     </div>
   </div>`;
 
+  document.querySelectorAll('[data-pronto]').forEach((b) => { b.onclick = () => S.verProximo(MENU_PROXIMO[Number(b.dataset.pronto)]); });
   document.getElementById('btn-ayuda').onclick = S.verAyuda;
   document.getElementById('btn-tema').onclick = S.cambiarTema;
   S.pintarBotonTema();
+  S.aplicarTema(S.tema());   // ajusta también el logo del menú
   const alternarMenu = () => document.getElementById('app').classList.toggle('menu-abierto');
   document.getElementById('btn-menu').onclick = alternarMenu;
   document.getElementById('sidebar-fondo').onclick = alternarMenu;

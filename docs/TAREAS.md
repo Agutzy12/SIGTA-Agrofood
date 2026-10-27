@@ -46,3 +46,7 @@ Marcá con `[x]` a medida que se completan.
 - [ ] Recorrer el guion de la demo completo en el navegador
 - [ ] Revisar que no queden datos ni claves personales en el repositorio
 - [x] Simplificación de interfaces: menú sin ítems vacíos, panel con 3 indicadores, menos secciones por pantalla, detalle plegable, textos más cortos
+- [x] Transiciones suaves entre páginas, fundidos de entrada y cambio de tema sin parpadeo
+- [x] Módulos "Próximamente" en el menú, con ventana explicativa de cada uno
+- [x] Modo oscuro en negro neutro y logo con fondo transparente para oscuro
+- [ ] Ver `docs/HOJA_DE_RUTA.md` para los módulos que faltan

@@ -46,16 +46,16 @@
   --ambar-suave: rgba(255, 163, 0, .14);
   --ambar-borde: rgba(255, 163, 0, .45);
 
-  --fondo: #111411;
-  --superficie: #1a1e1a;
-  --superficie-2: #1f241f;
-  --linea: #2d332d;
-  --texto: #e7eae5;
-  --texto-2: #b4bcb3;
-  --texto-suave: #98a197;
-  --gris-suave: #252a25;
-  --barra: #333a33;
-  --toast: #2a302a;
+  --fondo: #0d0d0e;
+  --superficie: #161617;
+  --superficie-2: #1c1c1e;
+  --linea: #2a2a2d;
+  --texto: #ececee;
+  --texto-2: #b9b9bf;
+  --texto-suave: #9a9aa2;
+  --gris-suave: #232326;
+  --barra: #34343a;
+  --toast: #2a2a2d;
 
   --verde: #6fd08a;
   --verde-suave: rgba(70, 175, 100, .17);
@@ -71,6 +71,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+html { background: var(--fondo); }
 body {
   font-family: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
   font-size: 15px; color: var(--texto); background: var(--fondo); line-height: 1.4;
@@ -314,7 +315,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
 
 /* Modal y avisos flotantes */
 .cortina { position: fixed; inset: 0; background: rgba(30, 32, 30, .45); display: grid; place-items: center; z-index: 50; padding: 20px; }
-.modal { background: var(--superficie); border-radius: 14px; max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; padding: 26px; box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
+.modal { background: var(--superficie); border: 1px solid var(--linea); border-radius: 14px; max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; padding: 26px; box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
 .modal h2 { font-size: 22px; margin-bottom: 6px; }
 .modal .cuerpo { margin: 14px 0 20px; }
 .modal .pie-modal { display: flex; justify-content: flex-end; gap: 12px; }
@@ -347,8 +348,6 @@ table.tabla { width: 100%; border-collapse: collapse; }
 
 /* ---------- Logo, tema y accesibilidad ---------- */
 .marca .logo { display: block; width: 176px; height: auto; }
-/* En oscuro el logo real se apoya sobre una placa clara para conservar sus colores y que se lea "ARGENTINA". */
-:root[data-tema="oscuro"] .marca .logo { background: #fff; border-radius: 10px; padding: 6px 10px; box-sizing: content-box; width: 156px; }
 .btn-icono { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--linea); background: var(--superficie); color: var(--texto-2); padding: 0; }
 .btn-icono:hover { background: var(--gris-suave); color: var(--texto); }
 .btn-menu { display: none; }
@@ -410,3 +409,47 @@ table.tabla { width: 100%; border-collapse: collapse; }
 .calidad-grid > * { min-width: 0; }
 @media (max-width: 1100px) { .calidad-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) { .tarjeta { overflow-x: auto; } }
+
+/* ---------- Próximamente (módulos de la versión completa) ---------- */
+.menu-titulo + .menu + .menu-titulo { margin-top: 18px; }
+.menu .item.apagado { padding: 9px 10px; font-size: 14px; color: var(--texto-suave); opacity: .85; }
+.menu .item.apagado:hover { opacity: 1; }
+.lista-pronto { margin: 0; padding-left: 20px; color: var(--texto-2); }
+.lista-pronto li { margin: 6px 0; }
+
+/* ---------- Animaciones ---------- */
+@view-transition { navigation: auto; }                     /* al cambiar de página, fundido en lugar de parpadeo */
+.sidebar { view-transition-name: sidebar; }
+.topbar { view-transition-name: topbar; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .2s; animation-timing-function: ease; }
+
+@keyframes subir { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aparecer-modal { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes entrar-tostada { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+/* Las secciones de cada pantalla entran escalonadas, sólo al cargar la página */
+.entrando #pantalla > * { animation: subir .38s cubic-bezier(.2, .7, .2, 1) both; }
+.entrando #pantalla > *:nth-child(2) { animation-delay: .05s; }
+.entrando #pantalla > *:nth-child(3) { animation-delay: .1s; }
+.entrando #pantalla > *:nth-child(4) { animation-delay: .15s; }
+.entrando #pantalla > *:nth-child(5) { animation-delay: .2s; }
+.entrando #pantalla > *:nth-child(n+6) { animation-delay: .25s; }
+.cortina { animation: aparecer .16s ease both; }
+.modal { animation: aparecer-modal .22s cubic-bezier(.2, .7, .2, 1) both; }
+.tostada { animation: entrar-tostada .25s ease both; }
+
+/* Respuesta suave al pasar el mouse */
+.btn, .menu a, .menu button.item, .kpi, .lote-item, .opcion-dictamen, .etapa, .enlace { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .15s; }
+.btn:not(:disabled):hover { transform: translateY(-1px); }
+.btn:not(:disabled):active { transform: none; }
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--sombra-flotante); }
+.tabla tbody tr { transition: background-color .12s; }
+
+/* Cambio de tema: los colores se funden */
+.cambiando-tema, .cambiando-tema * { transition: background-color .3s ease, border-color .3s ease, color .3s ease, fill .3s ease !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
