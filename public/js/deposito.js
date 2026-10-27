@@ -147,7 +147,7 @@ async function confirmar() {
     S.modal({
       titulo: 'Ingreso confirmado',
       html: `<div class="aviso verde" style="margin:0">${S.ico('checkCirculo')}<div><b>Comprobante ${S.esc(r.comprobante)}</b>La OP ${S.esc(rec.op.numero)} quedó Finalizada y ${S.kg(cuerpo.kg_conformes)} ingresaron al stock vendible en ${r.pallets.length} pallet${r.pallets.length === 1 ? '' : 's'}.</div></div>`,
-      botones: [{ texto: 'Volver al panel', alHacer: () => { location.href = 'index.html'; } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { location.href = `trazabilidad.html?q=${encodeURIComponent(rec.lote.codigo)}`; } }],
+      botones: [{ texto: 'Volver al panel', alHacer: () => { S.ir('index.html'); } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { S.ir(`trazabilidad.html?q=${encodeURIComponent(rec.lote.codigo)}`); } }],
     });
   } catch (e) { S.error(e); boton.disabled = false; }
 }
@@ -157,7 +157,7 @@ function cambiarLote() {
     titulo: 'Elegir lote para recibir',
     html: pendientes.length ? `<table class="tabla clic"><tbody>${pendientes.map((p) => `<tr data-op="${p.op_id}"><td><b>${S.esc(p.lote_codigo)}</b><span class="peq">${S.esc(p.producto_nombre)}</span></td><td>${S.kg(p.cantidad_kg)}</td><td>${S.esc(p.op_numero)}</td></tr>`).join('')}</tbody></table>` : '<p>No hay otros lotes liberados.</p>',
   });
-  document.querySelectorAll('.modal [data-op]').forEach((tr) => { tr.onclick = () => { location.href = `deposito.html?op=${tr.dataset.op}`; }; });
+  document.querySelectorAll('.modal [data-op]').forEach((tr) => { tr.onclick = () => { S.ir(`deposito.html?op=${tr.dataset.op}`); }; });
 }
 
 async function verProtocolo() {

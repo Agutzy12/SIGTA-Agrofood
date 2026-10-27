@@ -47,3 +47,7 @@ Navegador (public/)  ──pide──▶  routes.js  ──llama──▶  servi
 3. Mostrarla en la pantalla (`orden-nueva.js`).
 4. Agregar una prueba en `test/flujo.test.js` y correr `npm test`.
 5. Borrar `data/sigta.db` o usar *Reiniciar la demo* para recrear las tablas.
+
+## Navegación sin recarga
+El menú lateral y la barra superior se dibujan una sola vez. Al hacer clic en un enlace, `S.ir()` (en `common.js`) pide el HTML y el script de la pantalla destino y reemplaza sólo el contenido central; así no hay parpadeos. Si algo falla, cae en una navegación común. Cada script de pantalla corre aislado, por lo que sus variables no chocan con las de otras pantallas. Para ir a otra pantalla desde el código se usa `S.ir('calidad.html')` (no `location.href`).
+

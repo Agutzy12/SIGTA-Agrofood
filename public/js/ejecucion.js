@@ -14,7 +14,7 @@ async function listaParaElegir() {
   document.getElementById('pantalla').innerHTML = `
     <div class="cabecera"><div><h1>Ejecución y consumo</h1><p>Elegí la orden con la que vas a trabajar.</p></div></div>
     <section class="tarjeta">${utiles.length ? `<table class="tabla clic"><thead><tr><th>Orden</th><th>Producto y línea</th><th>Programación</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${utiles.map((o) => `<tr onclick="location.href='ejecucion.html?id=${o.id}'"><td><b>${S.esc(o.numero)}</b></td><td><b>${S.esc(o.producto_nombre)}</b><span class="peq">${S.esc(o.linea_nombre || '')}</span></td>
+      ${utiles.map((o) => `<tr onclick="S.ir('ejecucion.html?id=${o.id}')"><td><b>${S.esc(o.numero)}</b></td><td><b>${S.esc(o.producto_nombre)}</b><span class="peq">${S.esc(o.linea_nombre || '')}</span></td>
       <td class="num">${S.fechaCorta(o.fecha_proyectada)} · ${S.esc(o.hora_prevista)}</td><td>${S.pillOP(o.estado)}</td><td><span class="enlace">Abrir →</span></td></tr>`).join('')}</tbody></table>`
     : '<div class="vacio-grande"><h3>No hay órdenes para elaborar</h3>Planificá una orden nueva para empezar.<br><br><a class="btn primario" href="orden-nueva.html">Nueva orden de producción</a></div>'}</section>`;
 }
@@ -60,7 +60,7 @@ function vistaPlanificada() {
     S.modal({
       titulo: 'Cancelar la orden', html: `<div class="campo"><label>Motivo de la cancelación</label><input class="entrada" id="motivo-cancel" placeholder="Ej.: cambio en el pedido del cliente"></div>`,
       botones: [{ texto: 'Volver' }, { texto: 'Cancelar orden', peligro: true, alHacer: async () => {
-        try { await S.post(`/api/ordenes/${o.id}/cancelar`, { motivo: document.getElementById('motivo-cancel').value.trim() }); S.aviso('Orden cancelada', 'ok'); setTimeout(() => { location.href = 'index.html'; }, 600); } catch (e) { S.error(e); return false; }
+        try { await S.post(`/api/ordenes/${o.id}/cancelar`, { motivo: document.getElementById('motivo-cancel').value.trim() }); S.aviso('Orden cancelada', 'ok'); setTimeout(() => { S.ir('index.html'); }, 600); } catch (e) { S.error(e); return false; }
       } }],
     });
   };
@@ -265,7 +265,7 @@ async function finalizar() {
     const r = await S.post(`/api/ordenes/${orden.id}/finalizar-elaboracion`, c);
     S.modal({
       titulo: 'Elaboración finalizada', html: `<div class="aviso verde" style="margin:0">${S.ico('checkCirculo')}<div><b>El lote quedó en cuarentena</b>Calidad ya puede analizarlo y firmar el protocolo.</div></div>`,
-      botones: [{ texto: 'Volver al panel', alHacer: () => { location.href = 'index.html'; } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { location.href = `trazabilidad.html?q=${encodeURIComponent(r.orden.lote_codigo_previsto || orden.numero)}`; } }],
+      botones: [{ texto: 'Volver al panel', alHacer: () => { S.ir('index.html'); } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { S.ir(`trazabilidad.html?q=${encodeURIComponent(r.orden.lote_codigo_previsto || orden.numero)}`); } }],
     });
   } catch (e) { S.error(e); boton.disabled = false; }
 }
@@ -277,7 +277,7 @@ async function finalizar() {
     if (!id) return await listaParaElegir();
     orden = await S.get(`/api/ordenes/${id}`);
     document.querySelector('.miga').textContent = `Producción / ${orden.numero} / Elaboración`;
-    if (orden.estado === 'CREADA') return location.replace(`orden-nueva.html?id=${id}`);
+    if (orden.estado === 'CREADA') return S.ir(`orden-nueva.html?id=${id}`, 'replace');
     if (orden.estado === 'PLANIFICADA') return vistaPlanificada();
     if (orden.estado !== 'EN_PRODUCCION') return vistaCerrada();
     prepararFilas();

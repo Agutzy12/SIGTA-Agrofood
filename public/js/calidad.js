@@ -149,8 +149,8 @@ async function firmar() {
       titulo: aprobar ? 'Lote aprobado y liberado' : 'Lote rechazado y bloqueado',
       html: `<div class="aviso ${aprobar ? 'verde' : 'rojo'}" style="margin:0">${S.ico(aprobar ? 'checkCirculo' : 'info')}<div><b>Protocolo ${S.esc(protocolo)} firmado</b>${aprobar ? 'Depósito ya puede recibir el lote. La OP se cierra recién al confirmar el ingreso.' : 'El lote quedó bloqueado: no puede ingresar a depósito ni despacharse. Se alertó a jefatura de planta.'}</div></div>`,
       botones: aprobar
-        ? [{ texto: 'Seguir en Calidad', alHacer: () => { location.href = 'calidad.html'; } }, { texto: 'Ir a Ingreso a depósito', primario: true, alHacer: () => { location.href = `deposito.html?op=${lote.op_id}`; } }]
-        : [{ texto: 'Seguir en Calidad', alHacer: () => { location.href = 'calidad.html'; } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { location.href = `trazabilidad.html?q=${encodeURIComponent(lote.codigo)}`; } }],
+        ? [{ texto: 'Seguir en Calidad', alHacer: () => { S.ir('calidad.html'); } }, { texto: 'Ir a Ingreso a depósito', primario: true, alHacer: () => { S.ir(`deposito.html?op=${lote.op_id}`); } }]
+        : [{ texto: 'Seguir en Calidad', alHacer: () => { S.ir('calidad.html'); } }, { texto: 'Ver trazabilidad', primario: true, alHacer: () => { S.ir(`trazabilidad.html?q=${encodeURIComponent(lote.codigo)}`); } }],
     });
   } catch (e) { S.error(e); }
 }

@@ -129,12 +129,15 @@ S.usuario = () => S.usuarios.find((u) => u.rol === S.rol()) || S.usuarios[0];
 S.puede = (...roles) => roles.includes(S.rol());
 S.cambiarRol = (rol) => { try { localStorage.setItem('sigta_rol', rol); } catch { /* sin almacenamiento */ } location.reload(); };
 
+S._nav = 0;   // cuenta las navegaciones: sirve para ignorar respuestas de una pantalla que ya se cerró
 S.api = async (metodo, ruta, cuerpo) => {
+  const nav = S._nav;
   const u = S.usuario();
   const opciones = { method: metodo, headers: { 'Content-Type': 'application/json', 'x-rol': S.rol(), 'x-usuario': u ? encodeURIComponent(u.nombre) : '' } };
   if (cuerpo !== undefined && metodo !== 'GET') opciones.body = JSON.stringify(cuerpo);
   const respuesta = await fetch(ruta, opciones);
   const datos = await respuesta.json().catch(() => ({}));
+  if (metodo === 'GET' && nav !== S._nav) return new Promise(() => {});   // la pantalla que pidió esto ya no está
   if (!respuesta.ok) {
     const error = new Error(datos.error || 'Ocurrió un error inesperado');
     error.estado = respuesta.status;
@@ -146,6 +149,45 @@ S.get = (ruta) => S.api('GET', ruta);
 S.post = (ruta, cuerpo) => S.api('POST', ruta, cuerpo || {});
 S.put = (ruta, cuerpo) => S.api('PUT', ruta, cuerpo || {});
 S.param = (nombre) => new URLSearchParams(location.search).get(nombre);
+
+/* ---------- Navegación sin recargar ---------- */
+// El menú y la barra superior no se vuelven a dibujar: al hacer clic sólo se reemplaza el contenido central.
+// Si algo falla, se hace una navegación común (con recarga), así que nunca queda una pantalla rota.
+const PAGINAS = ['index', 'orden-nueva', 'ejecucion', 'calidad', 'deposito', 'trazabilidad'];
+const codigoDePagina = {};
+const nombreDePagina = (url) => (url.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
+S.ir = async (destino, modo = 'push') => {
+  const url = new URL(destino, location.href);
+  const nombre = nombreDePagina(url);
+  const comun = () => { location.href = url.href; };
+  if (url.origin !== location.origin || !PAGINAS.includes(nombre) || !document.getElementById('pantalla')) return comun();
+  try {
+    const html = await fetch(url.pathname + url.search).then((r) => { if (!r.ok) throw new Error('pagina'); return r.text(); });
+    const script = [...html.matchAll(/src="js\/([a-z-]+)\.js"/g)].map((m) => m[1]).find((n) => n !== 'common');
+    if (!script) return comun();
+    if (!codigoDePagina[script]) codigoDePagina[script] = await fetch(`js/${script}.js`).then((r) => { if (!r.ok) throw new Error('script'); return r.text(); });
+    S._nav += 1;
+    const titulo = html.match(/<title>(.*?)<\/title>/);
+    if (titulo) document.title = titulo[1];
+    if (modo !== 'pop') history[modo === 'replace' ? 'replaceState' : 'pushState']({}, '', url.pathname + url.search);
+    window.scrollTo(0, 0);
+    document.getElementById('app').classList.remove('menu-abierto');
+    document.querySelectorAll('.desplegable').forEach((d) => d.remove());
+    document.querySelectorAll('.cortina').forEach((c) => c.remove());
+    new Function(codigoDePagina[script])();   // el script de la pantalla corre aislado: sus variables no chocan con las de otras pantallas
+  } catch { comun(); }
+};
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[href]');
+  if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || a.target === '_blank' || a.hasAttribute('download')) return;
+  if ((a.getAttribute('href') || '').startsWith('#')) return;
+  const u = new URL(a.href, location.href);
+  if (u.origin !== location.origin || !PAGINAS.includes(nombreDePagina(u))) return;
+  e.preventDefault();
+  S.ir(a.href);
+});
+window.addEventListener('popstate', () => S.ir(location.href, 'pop'));
 
 /* ---------- Avisos flotantes y ventanas ---------- */
 S.aviso = (texto, tipo = '') => {
@@ -239,8 +281,33 @@ S.verProximo = (m) => S.modal({
 });
 const LOGO = `<img class="logo" src="img/${S.tema() === 'oscuro' ? 'logo-oscuro' : 'logo'}.png" alt="Agrifood Argentina" width="176" height="57">`;
 
+/** El área central espera los datos: si tardan más de un instante se muestran bloques grises; cuando llegan, el contenido entra con un fundido. */
+const ESQUELETO = '<div class="cargando" aria-label="Cargando"><i></i><i></i><i></i></div>';
+function entrar() {
+  const raiz = document.documentElement.classList;
+  raiz.add('entrando');
+  setTimeout(() => raiz.remove('entrando'), 450);
+}
+function prepararPantalla(activo, miga) {
+  const item = MENU.find((m) => m.id === activo);
+  document.querySelectorAll('.sidebar .menu a').forEach((a) => a.classList.toggle('activo', Boolean(item) && a.getAttribute('href') === item.url));
+  document.querySelector('.miga').textContent = miga;
+  const pantalla = document.getElementById('pantalla');
+  clearTimeout(S._espera);
+  const alLlegar = new MutationObserver(() => { alLlegar.disconnect(); clearTimeout(S._espera); entrar(); });
+  alLlegar.observe(pantalla, { childList: true });
+  S._espera = setTimeout(() => {
+    alLlegar.disconnect();
+    pantalla.innerHTML = ESQUELETO;
+    const luego = new MutationObserver(() => { luego.disconnect(); entrar(); });
+    luego.observe(pantalla, { childList: true });
+  }, 220);
+  return pantalla;
+}
+
 /** Arma el esqueleto de la pantalla. `activo` = id del menú; `miga` = texto del camino; devuelve el contenedor donde dibujar. */
 S.montar = async ({ activo, miga }) => {
+  if (document.querySelector('.app')) return prepararPantalla(activo, miga);   // navegación sin recarga: el menú y la barra se quedan
   // Los usuarios y la configuración casi no cambian: se guardan en la sesión para dibujar el menú sin esperar al servidor.
   let guardado = null;
   try { guardado = JSON.parse(sessionStorage.getItem('sigta_base')); } catch { /* sin caché */ }
@@ -280,7 +347,7 @@ S.montar = async ({ activo, miga }) => {
           <button class="usuario" id="btn-usuario"><span><b>${S.esc(u.nombre)}</b><small>${S.esc(u.cargo)}</small></span><span class="avatar">${S.esc(iniciales)}</span></button>
         </div>
       </header>
-      <main class="contenido"><div class="miga">${S.esc(miga)}</div><div id="pantalla"><div class="cargando" aria-label="Cargando"><i></i><i></i><i></i></div></div></main>
+      <main class="contenido"><div class="miga">${S.esc(miga)}</div><div id="pantalla">${ESQUELETO}</div></main>
     </div>
   </div>`;
 
@@ -346,12 +413,12 @@ S.reponerStock = async () => {
     if (!bajos.length) return S.aviso('Ningún insumo está por debajo del mínimo.');
     for (const i of bajos) await S.post('/api/demo/reponer', { insumo_id: i.id, cantidad: i.stock_minimo * 3 });
     S.aviso(`Se repuso stock de ${bajos.length} insumo(s)`, 'ok');
-    setTimeout(() => location.reload(), 700);
+    setTimeout(() => S.ir(location.href, 'replace'), 700);
   } catch (e) { S.error(e); }
 };
 S.reiniciarDemo = async () => {
   if (!(await S.confirmar('Reiniciar la demo', 'Se borran todos los movimientos y se vuelven a cargar los datos de ejemplo.', 'Reiniciar'))) return;
-  try { await S.post('/api/demo/reset'); S.aviso('Demo reiniciada', 'ok'); setTimeout(() => { location.href = 'index.html'; }, 600); } catch (e) { S.error(e); }
+  try { await S.post('/api/demo/reset'); S.aviso('Demo reiniciada', 'ok'); setTimeout(() => { S.ir('index.html'); }, 600); } catch (e) { S.error(e); }
 };
 S.verAyuda = () => S.modal({
   titulo: 'Ayuda y procedimientos',

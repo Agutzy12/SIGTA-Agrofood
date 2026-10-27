@@ -123,11 +123,11 @@ async function guardar(accion) {
     const orden = borrador ? await S.put(`/api/ordenes/${borrador.id}`, cuerpo) : await S.post('/api/ordenes', cuerpo);
     if (accion === 'PLANIFICAR') {
       S.aviso(`${orden.numero} planificada`, 'ok');
-      setTimeout(() => { location.href = `ejecucion.html?id=${orden.id}`; }, 700);
+      setTimeout(() => { S.ir(`ejecucion.html?id=${orden.id}`); }, 700);
     } else {
       const falta = ultimaVerificacion && ultimaVerificacion.hayFaltantes;
       S.aviso(falta ? `${orden.numero} guardada como borrador. Se avisó a Compras por los faltantes.` : `${orden.numero} guardada como borrador`, 'ok');
-      setTimeout(() => { location.href = 'index.html'; }, 900);
+      setTimeout(() => { S.ir('index.html'); }, 900);
     }
   } catch (e) {
     S.error(e);
@@ -142,7 +142,7 @@ async function guardar(accion) {
     const id = S.param('id');
     if (id) {
       borrador = await S.get(`/api/ordenes/${id}`);
-      if (borrador.estado !== 'CREADA') { location.replace(`ejecucion.html?id=${id}`); return; }
+      if (borrador.estado !== 'CREADA') { S.ir(`ejecucion.html?id=${id}`, 'replace'); return; }
       numeroOP = borrador.numero;
     } else {
       numeroOP = (await S.get('/api/ordenes/proximo-numero')).numero;
