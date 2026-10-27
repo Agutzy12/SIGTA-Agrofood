@@ -237,7 +237,7 @@ S.verProximo = (m) => S.modal({
     <ul class="lista-pronto">${m.puntos.map((x) => `<li>${S.esc(x)}</li>`).join('')}</ul>
     <p class="sub" style="margin-top:14px;color:var(--texto-suave)">Forma parte de la versión completa de SIGTA y todavía no está en esta demo.</p>`,
 });
-const LOGO = '<img class="logo" src="img/logo.png" alt="Agrifood Argentina" width="176" height="57">';
+const LOGO = `<img class="logo" src="img/${S.tema() === 'oscuro' ? 'logo-oscuro' : 'logo'}.png" alt="Agrifood Argentina" width="176" height="57">`;
 
 /** Arma el esqueleto de la pantalla. `activo` = id del menú; `miga` = texto del camino; devuelve el contenedor donde dibujar. */
 S.montar = async ({ activo, miga }) => {
@@ -245,7 +245,8 @@ S.montar = async ({ activo, miga }) => {
   let guardado = null;
   try { guardado = JSON.parse(sessionStorage.getItem('sigta_base')); } catch { /* sin caché */ }
   if (!guardado) {
-    guardado = { usuarios: await fetch('/api/usuarios').then((r) => r.json()), config: await fetch('/api/config').then((r) => r.json()) };
+    const [usuarios, config] = await Promise.all([fetch('/api/usuarios').then((r) => r.json()), fetch('/api/config').then((r) => r.json())]);
+    guardado = { usuarios, config };
     try { sessionStorage.setItem('sigta_base', JSON.stringify(guardado)); } catch { /* sin caché */ }
   }
   S.usuarios = guardado.usuarios;
@@ -279,7 +280,7 @@ S.montar = async ({ activo, miga }) => {
           <button class="usuario" id="btn-usuario"><span><b>${S.esc(u.nombre)}</b><small>${S.esc(u.cargo)}</small></span><span class="avatar">${S.esc(iniciales)}</span></button>
         </div>
       </header>
-      <main class="contenido"><div class="miga">${S.esc(miga)}</div><div id="pantalla"><div class="cargando">Cargando…</div></div></main>
+      <main class="contenido"><div class="miga">${S.esc(miga)}</div><div id="pantalla"><div class="cargando" aria-label="Cargando"><i></i><i></i><i></i></div></div></main>
     </div>
   </div>`;
 

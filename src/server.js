@@ -14,7 +14,12 @@ const seed = require('./seed');
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Fuentes e imágenes casi no cambian: el navegador las guarda una hora. El resto se revalida (rápido, responde 304 si no cambió).
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res, archivo) => {
+    if (/\.(woff2?|png|ico)$/i.test(archivo)) res.setHeader('Cache-Control', 'public, max-age=3600');
+  },
+}));
 
 // Todo lo que empieza con /api lo resuelve routes.handle() (permisos, validaciones y errores).
 app.use('/api', (req, res) => {

@@ -4,8 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nueva orden de producción · SIGTA</title>
+  <!-- El tema se fija antes de dibujar nada: así la carga nunca muestra un fondo del color equivocado -->
   <script>try{if(localStorage.getItem("sigta_tema")==="oscuro")document.documentElement.dataset.tema="oscuro"}catch(e){}</script>
+  <style>html{background:#f5f5f2}html[data-tema=oscuro]{background:#0d0d0e;color-scheme:dark}</style>
   <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preload" href="fonts/SourceSans3-Regular.woff" as="font" type="font/woff" crossorigin>
+  <link rel="preload" href="fonts/SourceSans3-SemiBold.woff" as="font" type="font/woff" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="expect" href="#pantalla" blocking="render">
 </head>
