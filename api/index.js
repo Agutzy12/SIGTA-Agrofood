@@ -1,7 +1,7 @@
-'use strict';
-// Punto de entrada para Vercel: atiende todo lo que empieza con /api.
-// Vercel sólo permite escribir en /tmp, así que la base de la demo vive ahí y se carga con los datos de ejemplo al arrancar.
-process.env.DB_PATH = process.env.DB_PATH || '/tmp/sigta.db';
-const app = require('../src/server');
-require('../src/seed').asegurarDatos();
-module.exports = app;
+// Función de Vercel: toda la API (/api/...) la atiende la misma aplicación Express del servidor.
+// Las pantallas (client/dist) las sirve Vercel como archivos estáticos.
+import { crearApp } from '../server/dist/app.js';
+
+process.env.TZ ||= 'America/Argentina/Cordoba'; // fechas y turnos en hora argentina
+
+export default crearApp();

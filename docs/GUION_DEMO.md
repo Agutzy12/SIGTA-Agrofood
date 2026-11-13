@@ -1,36 +1,53 @@
 # Guion de la demo (unos 10 minutos)
 
-Antes de empezar: `npm start`, abrir http://localhost:3000 y, si ya probaste cosas, **Datos de ejemplo → Reiniciar la demo**.
+Antes de empezar: `npm run dev` (o la versión publicada) y, si ya probaste cosas, **Datos de ejemplo → Reiniciar la demo**.
 
-## 1. Panel (rol: Martín Pérez)
-Mostrar los 3 indicadores, el cuadro **Para resolver** (almidón y film bajo el mínimo) y la tabla de órdenes con sus estados. Clic en *Avisar a Compras*.
+## 0. Ingreso (1 min)
+Mostrar la pantalla de ingreso: qué es SIGTA, los 4 pasos y el logo de Agrifood como cliente.
+Probar una contraseña incorrecta (mensaje genérico). Entrar como **Supervisor de producción**.
 
-## 2. Nueva orden (CU-P01)
-*Nueva orden* → producto MRC01, 1.000 kg. Ver el cálculo de insumos y el cartel "Sin faltantes".
-Probar con una cantidad enorme (por ejemplo 100000): aparecen faltantes y **no deja planificar**; sí deja *Guardar borrador*.
-Volver a 1.000 kg → *Confirmar y planificar*.
+## 1. Panel (1 min)
+"Tu próxima tarea" según el rol, los 3 indicadores, **Para resolver** (almidón y film bajo el mínimo) y la tabla de órdenes.
+Señalar el menú: los pasos están numerados y cada uno muestra cuántas tareas tiene pendientes.
+Pasar el mouse por la palabra *cuarentena* para mostrar el glosario.
 
-## 3. Ejecución y consumo (CU-P02)
-*Iniciar elaboración*: se asigna el lote (L-MRC01-AAAASS-NN) y el vencimiento. Mostrar los lotes de origen sugeridos por FEFO y *Dividir consumo*.
-Probar *Pausar línea* (con motivo) y *Reanudar*. Completar el peso neto (la merma se calcula sola) → *Finalizar elaboración*.
+## 2. Catálogo y planificar orden · CU-P01 (1 min)
+*Catálogo de productos*: son los 31 productos de agrifood-argentina.com, por línea. Abrir la ficha de *Espinaca Deshidratada en Escamas*
+(ingredientes de la web y su receta: 11,5 kg de espinaca fresca por kg) y el enlace a la web.
+*Nueva orden* → Coditos 500 g, 1.000 kg. La ficha técnica, el cálculo de insumos con la receta (sémola, harina, 2.000 paquetes, 84 cajas) y "Sin faltantes".
+Escribir 100000: aparecen faltantes y **no deja planificar** (sí guardar borrador, que avisa a Compras). Volver a 1.000 → *Confirmar y planificar*.
+
+## 3. Elaborar · CU-P02 (2 min)
+*Iniciar elaboración*: se asigna el lote (L-COD500-AAAASS-NN). Las partidas sugeridas por **FEFO** y *Dividir consumo*.
+*Pausar línea* y *Reanudar*. La merma se calcula sola → *Finalizar y enviar a Calidad*.
 **Idea clave:** el lote queda en **cuarentena** y recién ahí se descuenta el stock.
 
-## 4. Bloqueo preventivo
-Cambiar a **Diego Acosta** → Ingreso a depósito: el lote en cuarentena no aparece como recibible. En *Trazabilidad* buscar el lote → *Registrar despacho de ejemplo* → el sistema **lo bloquea**.
+## 4. Bloqueo lógico (1 min)
+Cambiar a **Operario de depósito** → *Trazabilidad* del lote → *Registrar despacho de ejemplo* → el sistema **lo bloquea**
+y el intento queda en el historial. Contar que la base de datos también lo impide (trigger).
 
-## 5. Control de calidad (CU-P03)
-Cambiar a **Lucía Benítez**. Elegir el lote, *Cargar ejemplo*, mirar los contrastes "Conforme".
-Mostrar que con una humedad de 19 % no deja aprobar. *Guardar y firmar protocolo*.
+## 5. Controlar calidad · CU-P03 (1 min)
+En el paso 3 usar *Cambiar a Técnico de calidad*. *Cargar ejemplo*, ver los contrastes "Conforme".
+Poner humedad 19 %: no deja aprobar. Volver a 12,4 → *Firmar protocolo*.
 
-## 6. Ingreso a depósito (CU-P04)
-Cambiar a **Diego Acosta**. Ver el certificado verificado, los pallets (25 + 24 bolsas), la ubicación y el balance. *Confirmar ingreso y cerrar OP* → comprobante REC y OP *Finalizada*.
+## 6. Ingresar a depósito · CU-P04 (1 min)
+*Cambiar a Operario de depósito*. Certificado verificado, pallets (1.960 paquetes: 3 pallets de 600 y uno de 160, según el palletizado de la web), ubicación y balance.
+*Confirmar ingreso y cerrar OP* → comprobante REC, OP *Finalizada* y las **etiquetas GS1-128** con código de barras.
 
-## 7. Trazabilidad
-Buscar el lote: recorrido en 5 etapas, insumos y proveedores (hacia atrás), historial de auditoría y documentos.
-Buscar un lote de origen (por ejemplo `MF-261015`) para ver **a qué lotes llegó** esa harina (hacia adelante).
+## 7. Trazabilidad (1 min)
+Recorrido en 5 etapas, insumos y proveedores (hacia atrás), historial de auditoría.
+*Escanear código* → elegir un pallet: el sistema lee la etiqueta GS1-128 y abre su lote.
+Buscar un lote de origen (por ejemplo `MF-261015`) para ver **a qué lotes llegó** esa harina de Molinos Florencia (hacia adelante).
 
 ## 8. Rechazo (opcional)
-Repetir con otro lote cargando un recuento de 45.000 UFC/g: sólo permite *Rechazado y bloqueado*, exige observaciones, la OP pasa a *Rechazada (Scrap)* y se alerta a jefatura (campanita).
+Con otro lote, recuento de 45.000 UFC/g: sólo permite *Rechazar y bloquear*, exige observaciones,
+la OP pasa a *Rechazada (Scrap)* y se alerta a jefatura (campanita).
+
+## 9. Gerencia (opcional)
+Entrar como **Gerencia**: ve todo con el aviso "Modo de sólo lectura" y los botones deshabilitados.
+
+## 10. Instalarla como app (opcional)
+En *¿Cómo funciona SIGTA?* → *Usar SIGTA como aplicación*, o el botón **Instalar app** de la barra superior.
 
 ## Si algo sale mal
 **Datos de ejemplo → Reiniciar la demo** deja todo como al principio.

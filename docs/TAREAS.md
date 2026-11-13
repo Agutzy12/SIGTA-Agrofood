@@ -1,52 +1,33 @@
-# Tareas del proyecto SIGTA (demo)
+# Tareas del proyecto SIGTA
 
-Marcá con `[x]` a medida que se completan.
+## Hechas en la demo (versión React + PostgreSQL)
 
-## Hechas en la demo
+- [x] Base PostgreSQL con Prisma: modelo de datos y migraciones versionadas
+- [x] Reglas en la base: triggers de bloqueo lógico, protocolo inalterable, auditoría sólo agregar, dictamen final y CHECK de saldos
+- [x] API REST en Express + TypeScript con validación Zod
+- [x] Inicio de sesión real (bcrypt + JWT) y permisos por rol
+- [x] CU-P01 a CU-P04 completos, panel y trazabilidad bidireccional
+- [x] Etiquetas GS1-128 (armado, código de barras y lectura simulada del escáner)
+- [x] Marca nueva: SIGTA como producto, "para Agrifood Argentina" como cliente
+- [x] Interfaz más intuitiva: menú numerado por pasos con pendientes, guía "qué hago y qué sigue", tarea sugerida por rol,
+      cambio de rol con un clic en la demo, glosario al pasar el mouse y página "¿Cómo funciona SIGTA?"
+- [x] Modo claro / oscuro y versión para celular
+- [x] 28 pruebas de la API y 8 recorridos en el navegador (Playwright)
+- [x] Integración continua (GitHub Actions) y despliegue en Vercel + Neon
+- [x] Catálogo real de agrifood-argentina.com: 5 líneas, 31 productos con su ficha, insumos y recetas
+- [x] Aplicación instalable (PWA) en PC, celular y colectoras
 
-- [x] Modelo de datos (SQLite) con reglas y *triggers* de bloqueo
-- [x] Catálogo de ejemplo: 5 productos, 14 insumos, recetas por 100 kg, partidas con vencimiento
-- [x] Historial de ejemplo (25 órdenes en todos los estados) para que el Panel no arranque vacío
-- [x] API con roles (Producción, Calidad, Depósito, Dirección)
-- [x] CU-P01 Nueva orden de producción (cálculo proporcional, borrador, planificar)
-- [x] CU-P02 Ejecución y consumo (lotes de origen FEFO, dividir consumo, pausa, merma)
-- [x] CU-P03 Control de calidad (determinaciones, dictamen, protocolo inalterable)
-- [x] CU-P04 Ingreso a depósito (pallets, ubicación, balance, cierre de OP)
-- [x] Panel general de producción
-- [x] Trazabilidad de lote (hacia atrás, hacia adelante, historial)
-- [x] Cambio de rol, reponer stock y reiniciar demo
-- [x] Logo real de Agrifood y favicon
-- [x] Modo claro (por defecto) y modo oscuro con botón en la barra superior
-- [x] Versión adaptable a celular (menú lateral desplegable)
-- [x] Cabecera con logo al imprimir la ficha de trazabilidad
-- [x] 12 pruebas automáticas del flujo completo
-- [x] README, guía del código y guion de la demo
+## Para seguir
 
-## Para seguir (tesis y programa final)
-
-- [x] Logo real con fondo transparente (297×97). En modo oscuro se apoya sobre una placa clara
-- [x] Tipografía Source Sans 3 incluida en el proyecto (`public/fonts`, licencia OFL): la demo funciona sin internet
-- [ ] Opcional: reemplazar `logo.png` por el logo vectorial (SVG) si la empresa lo provee
-- [ ] Login real con usuarios y contraseñas (hoy se elige el rol)
+- [ ] Conectar la base Neon en Vercel (ver `docs/DESPLIEGUE.md`)
+- [ ] Validar con Producción las proporciones de las recetas y con Calidad las especificaciones
+- [ ] Dividir en repositorios `SIGTA-Agrofood-Back` (carpeta `server/`) y `SIGTA-Agrofood-Front` (carpeta `client/`)
 - [ ] Reemplazar los valores de especificación de ejemplo por los reales de Calidad
-- [ ] Revisar con Agrifood los códigos (OP, lote, protocolo, pallet) y las vidas útiles
-- [ ] Módulo Compras (alta de remitos, aprobación de partidas de insumo)
-- [ ] Módulo Inventario (movimientos, ajustes, inventarios cíclicos)
-- [ ] Módulo Ventas y despacho (pedidos, remitos de salida)
-- [ ] Reportes (producción, merma, rechazos) y exportación real de la ficha de trazabilidad a PDF
-- [ ] Lector de códigos de barras real (hoy "Escanear código" es una simulación)
-- [ ] Pasar de SQLite a la base definitiva (por ejemplo PostgreSQL)
-- [ ] Pruebas de interfaz automáticas (Playwright)
-- [ ] Definir despliegue (servidor, copias de seguridad)
-- [ ] Capturas y diagramas del sistema para el informe final de la tesis
-
-## Antes de pasar a `main`
-
-- [x] `npm test` en verde
-- [ ] Recorrer el guion de la demo completo en el navegador
-- [ ] Revisar que no queden datos ni claves personales en el repositorio
-- [x] Simplificación de interfaces: menú sin ítems vacíos, panel con 3 indicadores, menos secciones por pantalla, detalle plegable, textos más cortos
-- [x] Transiciones suaves entre páginas, fundidos de entrada y cambio de tema sin parpadeo
-- [x] Módulos "Próximamente" en el menú, con ventana explicativa de cada uno
-- [x] Modo oscuro en negro neutro y logo con fondo transparente para oscuro
-- [ ] Ver `docs/HOJA_DE_RUTA.md` para los módulos que faltan
+- [ ] Revisar con Agrifood los códigos (OP, lote, protocolo, pallet), vidas útiles y GTIN reales
+- [ ] Administración de usuarios (alta, baja, cambio de contraseña)
+- [ ] Módulo Compras (remitos, aprobación de partidas de insumo con R.BPM.01V01)
+- [ ] Módulo Stock e inventarios (multi-depósito, recuento cíclico a ciegas, ajustes autorizados)
+- [ ] Módulo Ventas y despacho (pedidos, remitos, hoja de ruta, facturación electrónica)
+- [ ] Reportes y exportación a PDF
+- [ ] Lector de códigos de barras real (colectoras Zebra TC21)
+- [ ] Capturas y diagramas del sistema para el informe final

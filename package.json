@@ -1,19 +1,26 @@
 {
-  "name": "sigta-demo",
+  "name": "sigta-produccion-demo",
+  "private": true,
   "version": "1.0.0",
-  "description": "Demo del Sistema Integral de Gestión y Trazabilidad Alimentaria (SIGTA) - Módulo de Gestión de Producción y Trazabilidad Industrial - Agrifood Argentina S.A.",
-  "main": "src/server.js",
+  "description": "SIGTA · Sistema Integral de Gestión y Trazabilidad Alimentaria. Demo del módulo de Producción y Trazabilidad para Agrifood Argentina S.A.",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "seed": "node scripts/seed.js",
-    "test": "node --test"
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "setup": "npm run db:migrate -w server && npm run db:seed -w server",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build -w server && npm run build -w client",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server && npm run typecheck -w client",
+    "test:e2e": "npm run test:e2e -w client",
+    "lint": "npm run lint -w client"
   },
   "engines": {
-    "node": ">=22.13.0"
-  },
-  "dependencies": {
-    "express": "^5.1.0"
+    "node": ">=22.12"
   },
   "author": "Benitez Agustin",
   "license": "MIT"
