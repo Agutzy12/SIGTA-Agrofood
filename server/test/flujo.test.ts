@@ -5,7 +5,8 @@
 import { beforeAll, afterAll, describe, expect, test } from 'vitest';
 import { prisma } from '../src/db.js';
 import { cargarDatosDeEjemplo } from '../src/seed/seed.js';
-import { api, type RolPrueba } from './ayuda.js';
+import request from 'supertest';
+import { api, app, type RolPrueba } from './ayuda.js';
 
 const PROD: RolPrueba = 'PRODUCCION', CAL: RolPrueba = 'CALIDAD', DEP: RolPrueba = 'DEPOSITO', DIR: RolPrueba = 'DIRECCION';
 const hoy = () => new Date().toLocaleDateString('sv-SE'); // AAAA-MM-DD en hora local
@@ -14,9 +15,18 @@ const CODITOS = 28, PIZZA = 27, RIGATONI = 30, NOQUIS = 26, BUNUELOS_5K = 19;
 const ensayoOk = { humedad: 11.5, ph: 6.2, aroma: 'Característico', color: 'Amarillo ámbar uniforme', sabor: 'Característico', ufc: 320 };
 const ubicacion = { deposito: 'Producto terminado', sector: 'Secos · Ambiente', rack: 'A03', nivel: '02' };
 
-/** Cada prueba arranca con insumos de sobra (el seed deja algunos bajos a propósito para el Panel). */
+/** Cada prueba arranca con insumos de sobra (el seed deja algunos bajos a propósito para el Panel).
+ *  Hasta que exista el módulo de Compras, las partidas se cargan directo en la base de pruebas. */
+let reposiciones = 0;
 async function reponerTodo() {
-  for (let insumo_id = 1; insumo_id <= 42; insumo_id++) await api(PROD, 'post', '/demo/reponer', { insumo_id, cantidad: 20000 });
+  const insumos = await prisma.insumo.findMany({ select: { id: true, codigo: true } });
+  const n = ++reposiciones;
+  await prisma.partidaInsumo.createMany({
+    data: insumos.map((i) => ({
+      insumo_id: i.id, nro_lote: `PRUEBA-${n}-${i.codigo}`, proveedor: 'Pruebas', cantidad: 20000, vencimiento: null,
+      documento_origen: `REM-PRUEBA-${n}-${i.codigo}`, estado: 'LIBERADO' as const, ingreso: new Date(),
+    })),
+  });
 }
 /** Crea y planifica una orden. */
 async function nuevaOrden(producto_id = CODITOS, cantidad_kg = 1000) {
@@ -83,15 +93,20 @@ describe('Catálogo de agrifood-argentina.com', () => {
 
 describe('Seguridad: sesión y permisos', () => {
   test('sin sesión no se puede operar (401) y con un token inválido tampoco', async () => {
-    const { default: request } = await import('supertest');
-    const { app } = await import('./ayuda.js');
     expect((await request(app).get('/api/ordenes')).status).toBe(401);
     expect((await request(app).get('/api/ordenes').set('Authorization', 'Bearer cualquiera')).status).toBe(401);
   });
 
+  test('CORS: sólo las pantallas de un origen permitido pueden llamar a la API', async () => {
+    const ok = await request(app).options('/api/auth/login').set('Origin', 'http://localhost:5173');
+    expect(ok.status).toBe(204);
+    expect(ok.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+    expect(ok.headers['access-control-allow-headers']).toMatch(/Authorization/);
+    const otro = await request(app).get('/api/salud').set('Origin', 'https://otro-sitio.com');
+    expect(otro.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
   test('contraseña incorrecta: 401 con un mensaje que no da pistas', async () => {
-    const { default: request } = await import('supertest');
-    const { app } = await import('./ayuda.js');
     const r = await request(app).post('/api/auth/login').send({ email: 'calidad@sigta.demo', password: 'mal' });
     expect(r.status).toBe(401);
     expect(r.body.error).toBe('Email o contraseña incorrectos');
@@ -317,12 +332,25 @@ describe('Reglas en la base de datos (aunque alguien se saltee la aplicación)',
   });
 });
 
-describe('Herramientas de la demo', () => {
-  test('reiniciar la demo vuelve a los datos de ejemplo', async () => {
-    expect((await api(PROD, 'post', '/demo/reset')).estado).toBe(200);
+describe('Datos iniciales y accesos rápidos', () => {
+  test('la carga inicial deja el circuito con órdenes en cada paso', async () => {
+    await cargarDatosDeEjemplo();
     expect((await api(DIR, 'get', '/ordenes')).cuerpo).toHaveLength(25);
     const pendientes = (await api(DIR, 'get', '/pendientes')).cuerpo;
     expect(pendientes).toMatchObject({ planificar: 1, elaborar: 3, calidad: 3, deposito: 1 });
+  });
+
+  test('el ingreso ofrece entrar con cualquier usuario activo', async () => {
+    const r = await request(app).get('/api/auth/accesos');
+    expect(r.status).toBe(200);
+    expect(r.body.usuarios.map((u: { rol: string }) => u.rol)).toEqual(['PRODUCCION', 'CALIDAD', 'DEPOSITO', 'DIRECCION']);
+    const login = await request(app).post('/api/auth/login').send({ email: r.body.usuarios[1].email, password: r.body.clave });
+    expect(login.status).toBe(200);
+  });
+
+  test('ya no existen las herramientas de la demo (reponer stock y reiniciar)', async () => {
+    expect((await api(PROD, 'post', '/demo/reponer', { insumo_id: 1, cantidad: 10 })).estado).toBe(404);
+    expect((await api(PROD, 'post', '/demo/reset')).estado).toBe(404);
   });
 });
 

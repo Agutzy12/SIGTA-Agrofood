@@ -1,4 +1,5 @@
 /** Panel general de producción: indicadores, avisos, tarea sugerida y lista de órdenes. */
+import { IconoLinea, IconoProducto, LINEAS_PRODUCTO } from '../componentes/IconoLinea';
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -59,7 +60,7 @@ function tareaSugerida(rol: Rol, p: Pendientes | undefined): { icono: NombreIcon
 }
 
 export function Panel() {
-  const { usuario, pendientes, puede, nombreRol } = useSesion();
+  const { usuario, pendientes, puede, nombreRol, lineaDe } = useSesion();
   const { modal, aviso, error } = useDialogos();
   const { datos, error: errorCarga, recargar } = useDatos(() => Promise.all([
     api.get<DatosPanel>('/panel'), api.get<OrdenResumen[]>('/ordenes'), api.get<Linea[]>('/lineas'),
@@ -135,6 +136,12 @@ export function Panel() {
   };
 
   const stock = panel.atencion.stockBajo;
+  // Órdenes en curso (planificadas, en producción o en calidad) agrupadas por línea de producto
+  const activas = ordenes.filter((o) => ['PLANIFICADA', 'EN_PRODUCCION', 'EN_CONTROL_CALIDAD'].includes(o.estado));
+  const porLinea = LINEAS_PRODUCTO.map((l) => {
+    const suyas = activas.filter((o) => lineaDe(o.producto_nombre) === l.codigo);
+    return { ...l, ordenes: suyas.length, kg: suyas.reduce((a, o) => a + o.cantidad_kg, 0) };
+  });
   const cuarentena = panel.atencion.cuarentena[0];
   return (
     <>
@@ -154,6 +161,15 @@ export function Panel() {
         <div className="kpi destacado"><div className="t">Producción de hoy</div><div className="v">{num(k.produccionHoyKg)} kg</div><div className="d">{k.objetivoPct} % del objetivo de {num(k.objetivoKg)} kg</div></div>
         <div className="kpi"><div className="t">Lotes en <Termino t="cuarentena">cuarentena</Termino></div><div className="v">{k.lotesCuarentena}</div><div className="d">Esperan el dictamen de Calidad</div></div>
       </div>
+
+      <section className="lineas-tira" aria-label="Órdenes activas por línea de producto">
+        {porLinea.map((l) => (
+          <Link key={l.codigo} to="/catalogo" className={l.ordenes ? 'con-ordenes' : ''} title={`Ver la línea ${l.nombre} en el catálogo`}>
+            <IconoLinea codigo={l.codigo} />
+            <span><b>{l.nombre}</b><small>{l.ordenes ? `${plural(l.ordenes, 'orden activa', 'órdenes activas')} · ${kg(l.kg)}` : 'Sin órdenes activas'}</small></span>
+          </Link>
+        ))}
+      </section>
 
       {(stock.length > 0 || cuarentena) && (
         <section className="tarjeta atencion">
@@ -188,7 +204,7 @@ export function Panel() {
               return (
                 <tr key={o.id}>
                   <td><b>{o.numero}</b></td>
-                  <td><b>{o.producto_nombre}</b><span className="peq">{fechaCorta(o.fecha_proyectada)} · {o.hora_prevista} · {o.linea_nombre}{o.estado === 'EN_PRODUCCION' && o.pausada ? ` · Pausada: ${o.motivo_pausa}` : ''}</span></td>
+                  <td className="prod-celda"><IconoProducto de={o.producto_nombre} /><b>{o.producto_nombre}</b><span className="peq">{fechaCorta(o.fecha_proyectada)} · {o.hora_prevista} · {o.linea_nombre}{o.estado === 'EN_PRODUCCION' && o.pausada ? ` · Pausada: ${o.motivo_pausa}` : ''}</span></td>
                   <td className="num">{kg(o.cantidad_kg)}</td>
                   <td><PillOP estado={o.estado} /></td>
                   <td>{a.url ? <Link className="enlace" to={a.url}>{a.texto} →</Link> : <button className="enlace" onClick={() => detalle(o)}>{a.texto} →</button>}</td>

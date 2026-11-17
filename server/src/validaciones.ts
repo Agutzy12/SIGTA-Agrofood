@@ -71,5 +71,4 @@ export const ingreso = z.object({
 });
 
 export const despacho = z.object({ lote_id: id, cantidad_kg: numeroOTexto.nullish(), cliente: z.string().max(120).nullish() });
-export const reponer = z.object({ insumo_id: id, cantidad: numeroOTexto });
 export const avisarCompras = z.object({ insumo_id: id });

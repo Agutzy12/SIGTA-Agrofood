@@ -1,4 +1,5 @@
 /** Consulta · Trazabilidad de lote: hacia atrás (insumos y proveedores) y hacia adelante (depósito y clientes). */
+import { IconoProducto } from '../componentes/IconoLinea';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, ErrorApi } from '../lib/api';
@@ -156,7 +157,7 @@ function ListaLotes({ r, buscar }: { r: Lista; buscar: (q: string) => void }) {
   return (
     <section className="tarjeta"><h2>Varios lotes coinciden</h2><p className="sub">Elegí uno para ver su recorrido.</p>
       <table className="tabla clic" style={{ marginTop: 14 }}><tbody>{r.lotes.map((l) => (
-        <tr key={l.id} onClick={() => buscar(l.codigo)}><td><b>{l.codigo}</b><span className="peq">{l.producto_nombre}</span></td><td>{kg(l.cantidad_kg)}</td><td><PillLote estado={l.estado} /></td></tr>
+        <tr key={l.id} onClick={() => buscar(l.codigo)}><td className="prod-celda"><IconoProducto de={l.producto_nombre} /><b>{l.codigo}</b><span className="peq">{l.producto_nombre}</span></td><td>{kg(l.cantidad_kg)}</td><td><PillLote estado={l.estado} /></td></tr>
       ))}</tbody></table>
     </section>
   );
@@ -173,7 +174,7 @@ function FichaPartida({ r, buscar }: { r: Partidas; buscar: (q: string) => void 
       {p.lotes.length ? (
         <table className="tabla clic"><thead><tr><th>Lote</th><th>Producto</th><th>Estado</th><th>Destino</th></tr></thead>
           <tbody>{p.lotes.map((l) => (
-            <tr key={l.id} onClick={() => buscar(l.codigo)}><td><b>{l.codigo}</b></td><td>{l.producto_nombre}</td><td><PillLote estado={l.estado} /></td>
+            <tr key={l.id} onClick={() => buscar(l.codigo)}><td><b>{l.codigo}</b></td><td className="prod-celda"><IconoProducto de={l.producto_nombre} />{l.producto_nombre}</td><td><PillLote estado={l.estado} /></td>
               <td>{l.despachos.length ? l.despachos.map((d, i) => <div key={i}>{d.cliente} · {kg(d.cantidad_kg)}</div>) : 'Sin despachos'}</td></tr>
           ))}</tbody></table>
       ) : <p className="sub">Esta partida todavía no se usó en ningún lote.</p>}
@@ -190,8 +191,8 @@ function FichaLote({ f, buscar, despacho }: { f: Ficha; buscar: (q: string) => v
   return (
     <>
       <section className="tarjeta">
-        <div className="tarjeta-cab"><div><div className="codigo" style={{ fontSize: 12, textTransform: 'uppercase' }}>{lote.producto_codigo} · {lote.categoria_nombre ?? 'Producto terminado'}</div>
-          <h2 style={{ fontSize: 28, margin: '4px 0' }}>{lote.producto_nombre} · {lote.presentacion}</h2><p className="sub">{lote.codigo} · {op.numero}{lote.url_web && <> · <a className="enlace" href={lote.url_web} target="_blank" rel="noreferrer">Ficha en la web de Agrifood ↗</a></>}</p></div>
+        <div className="tarjeta-cab"><div className="con-prod"><IconoProducto de={lote.producto_nombre} grande /><div><div className="codigo" style={{ fontSize: 12, textTransform: 'uppercase' }}>{lote.producto_codigo} · {lote.categoria_nombre ?? 'Producto terminado'}</div>
+          <h2 style={{ fontSize: 26, margin: '2px 0' }}>{lote.producto_nombre} · {lote.presentacion}</h2><p className="sub">{lote.codigo} · {op.numero}{lote.url_web && <> · <a className="enlace" href={lote.url_web} target="_blank" rel="noreferrer">Ficha en la web de Agrifood ↗</a></>}</p></div></div>
           <Pill color={color}>{texto}</Pill></div>
         <div className="rejilla col-3">
           <Dato titulo="Elaborado · Vence">{fecha(op.inicio_real || lote.creado_en)} · {fecha(lote.vencimiento)}</Dato>

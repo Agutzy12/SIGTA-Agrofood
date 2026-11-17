@@ -6,7 +6,7 @@
 import { Router, type Request, type Response } from 'express';
 import type { Rol } from '@prisma/client';
 import type { ZodTypeAny } from 'zod';
-import { MODO_DEMO, MOTIVOS_PAUSA, NOMBRE_ROL, PLANTA, UBICACIONES, CLAVE_DEMO } from './config.js';
+import { ACCESOS_RAPIDOS, MOTIVOS_PAUSA, NOMBRE_ROL, PLANTA, UBICACIONES, CLAVE_INICIAL } from './config.js';
 import { datosInvalidos, noExiste, prohibido } from './errores.js';
 import { serializar } from './serializar.js';
 import * as V from './validaciones.js';
@@ -17,7 +17,6 @@ import * as calidad from './services/calidad.js';
 import * as deposito from './services/deposito.js';
 import * as trazabilidad from './services/trazabilidad.js';
 import * as panel from './services/panel.js';
-import { reiniciarDemo } from './seed/seed.js';
 import { prisma } from './db.js';
 
 interface Contexto {
@@ -32,7 +31,8 @@ interface Ruta {
   ruta: string;
   roles?: Rol[] | null;
   publica?: boolean;
-  soloDemo?: boolean;
+  /** Sólo existe con ACCESOS_RAPIDOS=true */
+  soloAccesosRapidos?: boolean;
   esquema?: ZodTypeAny;
   ejecutar: (c: Contexto) => unknown;
 }
@@ -46,11 +46,12 @@ export const RUTAS: Ruta[] = [
   // Sesión
   { metodo: 'post', ruta: '/auth/login', publica: true, esquema: V.login, ejecutar: ({ cuerpo }) => auth.iniciarSesion(cuerpo.email, cuerpo.password) },
   { metodo: 'get', ruta: '/auth/yo', ejecutar: ({ usuario }) => usuario },
-  { metodo: 'get', ruta: '/auth/demo', publica: true, soloDemo: true, ejecutar: async () => ({ clave: CLAVE_DEMO, usuarios: await auth.usuariosDemo() }) },
-  { metodo: 'get', ruta: '/salud', publica: true, ejecutar: async () => { await prisma.$queryRaw`SELECT 1`; return { ok: true, demo: MODO_DEMO }; } },
+  // Accesos rápidos de la pantalla de ingreso: entrar con cualquier usuario sin escribir la contraseña
+  { metodo: 'get', ruta: '/auth/accesos', publica: true, soloAccesosRapidos: true, ejecutar: async () => ({ clave: CLAVE_INICIAL, usuarios: await auth.usuariosParaAccesoRapido() }) },
+  { metodo: 'get', ruta: '/salud', publica: true, ejecutar: async () => { await prisma.$queryRaw`SELECT 1`; return { ok: true }; } },
 
   // Datos generales
-  { metodo: 'get', ruta: '/config', ejecutar: () => ({ planta: PLANTA, ubicaciones: UBICACIONES, motivos_pausa: MOTIVOS_PAUSA, demo: MODO_DEMO, roles: NOMBRE_ROL }) },
+  { metodo: 'get', ruta: '/config', ejecutar: () => ({ planta: PLANTA, ubicaciones: UBICACIONES, motivos_pausa: MOTIVOS_PAUSA, roles: NOMBRE_ROL }) },
   { metodo: 'get', ruta: '/productos', ejecutar: () => inventario.listProductos() },
   { metodo: 'get', ruta: '/catalogo', ejecutar: () => inventario.catalogo() },
   { metodo: 'get', ruta: '/lineas', ejecutar: () => inventario.listLineas() },
@@ -97,10 +98,6 @@ export const RUTAS: Ruta[] = [
 
   // Trazabilidad (también acepta el texto de una etiqueta GS1-128 escaneada)
   { metodo: 'get', ruta: '/trazabilidad', ejecutar: ({ consulta }) => trazabilidad.buscar(consulta.q) },
-
-  // Herramientas de la demo (sólo con DEMO_MODE=true)
-  { metodo: 'post', ruta: '/demo/reponer', soloDemo: true, esquema: V.reponer, ejecutar: ({ usuario, cuerpo }) => inventario.reponerStock(usuario, cuerpo) },
-  { metodo: 'post', ruta: '/demo/reset', soloDemo: true, ejecutar: ({ usuario }) => reiniciarDemo(usuario) },
 ];
 
 /** Arma el Router de Express a partir de la tabla. */
@@ -108,7 +105,7 @@ export function crearRouter() {
   const router = Router();
   for (const r of RUTAS) {
     router[r.metodo](r.ruta, async (req: Request, res: Response) => {
-      if (r.soloDemo && !MODO_DEMO) throw noExiste('Ruta inexistente');
+      if (r.soloAccesosRapidos && !ACCESOS_RAPIDOS) throw noExiste('Ruta inexistente');
       // 1) ¿Quién es? (sesión)  2) ¿Puede? (rol)  3) ¿El pedido está bien formado? (Zod)  4) Ejecutar
       const usuario = r.publica ? (null as unknown as auth.UsuarioPublico) : await auth.usuarioDelToken(req.headers.authorization);
       if (r.roles && !r.roles.includes(usuario.rol)) {

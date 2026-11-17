@@ -43,8 +43,8 @@ export async function usuarioDelToken(cabecera: string | undefined) {
   return publico(usuario);
 }
 
-/** Usuarios de ejemplo para los accesos rápidos de la pantalla de ingreso (sólo en modo demo). */
-export async function usuariosDemo() {
+/** Usuarios activos para los accesos rápidos de la pantalla de ingreso (con ACCESOS_RAPIDOS=true). */
+export async function usuariosParaAccesoRapido() {
   const lista = await db().usuario.findMany({ where: { activo: true }, orderBy: { id: 'asc' } });
   return lista.map(publico);
 }

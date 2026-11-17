@@ -10,7 +10,7 @@ export function BotonInstalar() {
   useEffect(() => alCambiarInstalable(() => setDisponible(sePuedeInstalar())), []);
   if (!disponible) return null;
   return (
-    <button className="chip-demo" style={{ background: 'var(--verde-suave)', color: 'var(--verde)' }} title="Instalar SIGTA como aplicación"
+    <button className="chip-boton" style={{ background: 'var(--verde-suave)', color: 'var(--verde)' }} title="Instalar SIGTA como aplicación"
       onClick={async () => { if (await instalar()) aviso('SIGTA quedó instalada como aplicación', 'ok'); }}>
       <Icono n="descargar" tam={14} /> Instalar app
     </button>

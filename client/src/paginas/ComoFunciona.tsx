@@ -4,7 +4,6 @@ import { useSesion } from '../contexto/Sesion';
 import { GLOSARIO } from '../lib/glosario';
 import { PASOS } from '../lib/proceso';
 import { Cabecera, Miga } from '../componentes/Comunes';
-import { Icono } from '../componentes/Icono';
 import { ComoInstalar } from '../componentes/InstalarApp';
 
 export function ComoFunciona() {
@@ -40,7 +39,7 @@ export function ComoFunciona() {
       <div className="rejilla col-2">
         <section className="tarjeta">
           <h2>Reglas que el sistema hace cumplir</h2>
-          <ul className="lista-pronto" style={{ marginTop: 12 }}>
+          <ul className="lista-pronto reglas" style={{ marginTop: 12 }}>
             <li>Un lote recién elaborado queda en <b>cuarentena</b>: no se puede guardar en depósito ni despachar.</li>
             <li>Sólo <b>Calidad</b> puede liberarlo. Un lote <b>rechazado</b> queda bloqueado y su orden pasa a Rechazada (Scrap).</li>
             <li>El bloqueo se verifica en <b>dos niveles</b>: en la aplicación y en la base de datos (triggers de PostgreSQL).</li>
@@ -60,7 +59,6 @@ export function ComoFunciona() {
               <tr><td><b>{nombreRol('DIRECCION')}</b></td><td>Consulta todo, sin modificar nada.</td></tr>
             </tbody>
           </table>
-          <p className="sub" style={{ marginTop: 12 }}><Icono n="info" tam={16} /> En la demo podés cambiar de usuario desde tu nombre, arriba a la derecha.</p>
         </section>
       </div>
 

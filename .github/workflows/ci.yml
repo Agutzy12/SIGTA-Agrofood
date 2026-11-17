@@ -36,4 +36,12 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      # Las pantallas (vite preview) llaman a la API: se levanta con los datos iniciales recién cargados
+      - name: Levantar la API
+        run: |
+          node --env-file-if-exists=server/.env server/dist/seed/cli.js
+          nohup npm start > api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/api/salud && break; sleep 1; done
       - run: npm run test:e2e
+      - if: failure()
+        run: cat api.log

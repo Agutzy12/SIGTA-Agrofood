@@ -2,9 +2,8 @@
  * Catálogos (productos, líneas, recetas) y stock de insumos.
  */
 import { db } from '../db.js';
-import { ahora } from '../clock.js';
-import { datosInvalidos, noExiste } from '../errores.js';
-import { redondear, aNumero, auditar, fechaLocal, type UsuarioActual } from './comun.js';
+import { noExiste } from '../errores.js';
+import { redondear } from './comun.js';
 
 /** Estados de orden que reservan insumos (planificar no descuenta, pero sí reserva). */
 const ESTADOS_QUE_RESERVAN = ['PLANIFICADA', 'EN_PRODUCCION'] as const;
@@ -101,26 +100,6 @@ export async function getReceta(id: number) {
     .sort((a, b) => (a.tipo !== b.tipo ? (a.tipo === 'MP' ? -1 : 1) : a.tipo === 'MP' ? b.cantidad_base - a.cantidad_base : a.insumo_id - b.insumo_id));
   const { producto, items: _, ...resto } = receta;
   return { ...resto, producto_nombre: producto.nombre, producto_codigo: producto.codigo, items };
-}
-
-/** Herramienta de la demo: simula la llegada de mercadería (lo hará el módulo de Compras). */
-export async function reponerStock(usuario: UsuarioActual, cuerpo: { insumo_id: unknown; cantidad: unknown }) {
-  const insumo = await db().insumo.findUnique({ where: { id: Number(cuerpo.insumo_id) || 0 } });
-  if (!insumo) throw noExiste('Insumo inexistente');
-  const cantidad = aNumero(cuerpo.cantidad);
-  if (!(cantidad > 0)) throw datosInvalidos('La cantidad debe ser mayor a 0');
-  const hoy = fechaLocal(ahora()).replaceAll('-', '');
-  const prefijo = `REP-${hoy}-${insumo.codigo}`;
-  const previas = await db().partidaInsumo.count({ where: { nro_lote: { startsWith: prefijo } } });
-  const nro = `${prefijo}${previas ? `-${previas + 1}` : ''}`;
-  await db().partidaInsumo.create({
-    data: {
-      insumo_id: insumo.id, nro_lote: nro, proveedor: 'Reposición (demo)', cantidad, vencimiento: null,
-      documento_origen: `REM-${nro}`, estado: 'LIBERADO', ingreso: ahora(),
-    },
-  });
-  await auditar(usuario, 'REPOSICION_STOCK', insumo.codigo, `Ingreso de ${cantidad} ${insumo.unidad} de ${insumo.nombre}`);
-  return { ok: true, partida: nro };
 }
 
 /** Catálogo completo por línea comercial, con la ficha técnica y la receta de cada producto. */

@@ -8,7 +8,7 @@ import { useDialogos } from '../contexto/Dialogos';
 import { api } from '../lib/api';
 import { fechaHora, fechaLarga } from '../lib/formato';
 import { PASOS } from '../lib/proceso';
-import { QUE_HACE, USUARIO_DE_ROL } from '../lib/demo';
+import { QUE_HACE } from '../lib/roles';
 import type { Pendientes, Rol } from '../lib/tipos';
 import { Icono, IsotipoSigta, type NombreIcono } from './Icono';
 import { Pill } from './Comunes';
@@ -31,20 +31,18 @@ const PROXIMOS: { texto: string; icono: NombreIcono; resumen: string; puntos: st
   { texto: 'Clientes y ventas', icono: 'ventas', resumen: 'De los pedidos mayoristas al despacho, con el bloqueo de lotes ya funcionando.',
     puntos: ['Pedidos y verificación de crédito y stock', 'Remitos y hojas de ruta', 'Facturación electrónica'] },
   { texto: 'Reportes', icono: 'reportes', resumen: 'Tableros para decidir con datos.', puntos: ['Productividad y mermas', 'Rotación de inventarios', 'Compras y eficiencia operativa'] },
-  { texto: 'Administración de usuarios', icono: 'usuarios', resumen: 'Alta y baja de usuarios y perfiles. El inicio de sesión y los permisos por rol ya funcionan en esta demo.',
+  { texto: 'Administración de usuarios', icono: 'usuarios', resumen: 'Alta y baja de usuarios y perfiles. El inicio de sesión y los permisos por rol ya funcionan.',
     puntos: ['Alta, baja y cambio de contraseña', 'Asignación de perfiles', 'Consulta del registro de auditoría'] },
 ];
 
 /** Ícono y color del encabezado según la sección en la que se está. */
-function seccionDe(ruta: string): { icono: NombreIcono; clase: string } {
-  if (ruta.startsWith('/ordenes')) return { icono: 'ordenes', clase: 'produccion' };
-  if (ruta.startsWith('/ejecucion')) return { icono: 'rolProduccion', clase: 'produccion' };
-  if (ruta.startsWith('/calidad')) return { icono: 'rolCalidad', clase: 'calidad' };
-  if (ruta.startsWith('/deposito')) return { icono: 'rolDeposito', clase: 'deposito' };
-  if (ruta.startsWith('/trazabilidad')) return { icono: 'trazabilidad', clase: 'consulta' };
-  if (ruta.startsWith('/catalogo')) return { icono: 'caja', clase: 'consulta' };
-  if (ruta.startsWith('/como-funciona')) return { icono: 'ayuda', clase: 'consulta' };
-  return { icono: 'panel', clase: 'inicio' };
+/** Área de cada pantalla: define el color y la ilustración de su encabezado. */
+function seccionDe(ruta: string): { clase: string } {
+  if (ruta.startsWith('/ordenes') || ruta.startsWith('/ejecucion')) return { clase: 'produccion' };
+  if (ruta.startsWith('/calidad')) return { clase: 'calidad' };
+  if (ruta.startsWith('/deposito')) return { clase: 'deposito' };
+  if (ruta.startsWith('/trazabilidad') || ruta.startsWith('/catalogo') || ruta.startsWith('/como-funciona')) return { clase: 'consulta' };
+  return { clase: 'inicio' };
 }
 
 export function Marca() {
@@ -54,7 +52,7 @@ export function Marca() {
     <div className="marca">
       <Link to="/ingresar" className="sigta-titulo" title="Volver al inicio de sesión" onClick={() => salir()}><IsotipoSigta /><b>SIGTA</b></Link>
       <div className="bajada">Gestión y Trazabilidad Alimentaria</div>
-      <div className="para"><span>para</span><LogoEmpresa /></div>
+      <div className="para"><span>para</span><LogoEmpresa siempreClaro /></div>
     </div>
   );
 }
@@ -73,14 +71,13 @@ function Desplegable({ abierto, cerrar, children }: { abierto: boolean; cerrar: 
 }
 
 export function Layout() {
-  const { usuario, config, pendientes, recargarPendientes, salir, ingresarComo, nombreRol } = useSesion();
-  const { modal, aviso, error, confirmar } = useDialogos();
+  const { usuario, config, pendientes, recargarPendientes, salir, nombreRol } = useSesion();
+  const { modal } = useDialogos();
   const { tema, cambiarTema } = useTema();
   const ubicacion = useLocation();
   const navegar = useNavigate();
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const [abierto, setAbierto] = useState<'' | 'usuario' | 'demo' | 'alertas'>('');
-  const [vuelta, setVuelta] = useState(0); // al cambiar de usuario o reiniciar, la pantalla se vuelve a cargar
+  const [abierto, setAbierto] = useState<'' | 'usuario' | 'alertas'>('');
   const [lateral, setLateral] = useState<HTMLElement | null>(null);
   const [cabecera, setCabecera] = useState<HTMLElement | null>(null);
   const [alertas, setAlertas] = useState<{ id: number; detalle: string; usuario: string; fecha: string }[] | null>(null);
@@ -101,44 +98,10 @@ export function Layout() {
     </>),
   });
 
-  const cambiarA = async (rol: Rol) => {
-    setAbierto('');
-    try {
-      const u = await ingresarComo(USUARIO_DE_ROL[rol]);
-      aviso(`Ahora estás como ${u.nombre} (${u.cargo})`, 'ok');
-      setVuelta((v) => v + 1);
-    } catch (e) { error(e); }
-  };
-
   const abrirAlertas = async () => {
     setAbierto(abierto === 'alertas' ? '' : 'alertas');
     setAlertas(null);
     try { setAlertas(await api.get('/alertas')); } catch { setAlertas([]); }
-  };
-
-  const reponerStock = async () => {
-    setAbierto('');
-    try {
-      const insumos = await api.get<{ id: number; bajo: boolean; stock_minimo: number }[]>('/insumos');
-      const bajos = insumos.filter((i) => i.bajo);
-      if (!bajos.length) return aviso('Ningún insumo está por debajo del mínimo.');
-      for (const i of bajos) await api.post('/demo/reponer', { insumo_id: i.id, cantidad: i.stock_minimo * 3 });
-      aviso(`Se repuso stock de ${bajos.length} insumo(s)`, 'ok');
-      setVuelta((v) => v + 1);
-      recargarPendientes();
-    } catch (e) { error(e); }
-  };
-
-  const reiniciar = async () => {
-    setAbierto('');
-    if (!(await confirmar('Reiniciar la demo', 'Se borran todos los movimientos y se vuelven a cargar los datos de ejemplo. Tarda unos segundos.', 'Reiniciar'))) return;
-    try {
-      aviso('Reiniciando la demo…');
-      await api.post('/demo/reset');
-      aviso('Demo reiniciada', 'ok');
-      navegar('/panel');
-      setVuelta((v) => v + 1);
-    } catch (e) { error(e); }
   };
 
   return (
@@ -173,7 +136,7 @@ export function Layout() {
         </nav>
         <div className="espacio" />
         <NavLink to="/como-funciona" className={({ isActive }) => `ayuda ${isActive ? 'activo' : ''}`}><Icono n="ayuda" /><span>¿Cómo funciona SIGTA?</span></NavLink>
-        <div className="version">SIGTA · v1.0 · {config.demo ? 'Demo' : 'Producción'}</div>
+        <div className="version">SIGTA · v1.0</div>
       </aside>
 
       <div className="principal">
@@ -182,7 +145,6 @@ export function Layout() {
           <div className="fecha">{config.planta} · {fechaLarga()}</div>
           <div className="derecha">
             <BotonInstalar />
-            {config.demo && <button className="chip-demo" onClick={() => setAbierto(abierto === 'demo' ? '' : 'demo')}><span className="punto" />Datos de ejemplo</button>}
             <button className="btn-icono" type="button" onClick={cambiarTema} title={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
               aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}><Icono n={tema === 'oscuro' ? 'sol' : 'luna'} /></button>
             <button className="campana" aria-label="Alertas" onClick={abrirAlertas}><Icono n="campana" />{pendientes && pendientes.alertas > 0 && <span className="n">{pendientes.alertas}</span>}</button>
@@ -194,22 +156,8 @@ export function Layout() {
           <Desplegable abierto={abierto === 'usuario'} cerrar={() => setAbierto('')}>
             <h4>Sesión iniciada</h4>
             <div className="sesion-actual"><FotoRol rol={usuario.rol} tam={40} /><span><b>{usuario.nombre}</b><small>{usuario.email}</small><small>{QUE_HACE[usuario.rol]}</small></span></div>
-            {config.demo && <>
-              <hr /><h4>Cambiar de usuario (demo)</h4>
-              {(Object.keys(USUARIO_DE_ROL) as Rol[]).filter((r) => r !== usuario.rol).map((r) => (
-                <button key={r} className="op" onClick={() => cambiarA(r)}>
-                  <FotoRol rol={r} tam={36} /><span><b>{nombreRol(r)}</b><small>{QUE_HACE[r]}</small></span>
-                </button>
-              ))}
-            </>}
             <hr />
             <button className="op" onClick={() => { salir(); navegar('/ingresar'); }}><Icono n="salir" /><span><b>Cerrar sesión</b></span></button>
-          </Desplegable>
-
-          <Desplegable abierto={abierto === 'demo'} cerrar={() => setAbierto('')}>
-            <h4>Herramientas de la demo</h4>
-            <button className="op" onClick={reponerStock}><Icono n="caja" /><span><b>Reponer stock de insumos</b><small>Simula la llegada de mercadería de Compras</small></span></button>
-            <button className="op" onClick={reiniciar}><Icono n="reloj" /><span><b>Reiniciar la demo</b><small>Vuelve a cargar los datos de ejemplo</small></span></button>
           </Desplegable>
 
           <Desplegable abierto={abierto === 'alertas'} cerrar={() => setAbierto('')}>
@@ -223,7 +171,6 @@ export function Layout() {
         <main className="contenido">
           <LateralContexto.Provider value={{ lateral, cabecera }}>
             <div className={`banner ${seccion.clase}`}>
-              <span className="banner-icono"><Icono n={seccion.icono} tam={26} /></span>
               <div className="contenido-cabecera" ref={setCabecera} />
             </div>
             <div className="contenido-grid">
@@ -231,7 +178,7 @@ export function Layout() {
                 {usuario.rol === 'DIRECCION' && (
                   <div className="aviso solo-lectura"><Icono n="info" /><div><b>Modo de sólo lectura</b>Estás como {usuario.cargo}: podés consultar todo, pero no registrar movimientos.</div></div>
                 )}
-                <div key={`${ubicacion.pathname}|${vuelta}|${usuario.id}`} className="pantalla-entra"><Outlet /></div>
+                <div key={`${ubicacion.pathname}|${usuario.id}`} className="pantalla-entra"><Outlet /></div>
               </div>
               <aside className="lateral" ref={setLateral} aria-label="Guía del paso" />
             </div>

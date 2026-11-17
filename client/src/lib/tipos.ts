@@ -6,7 +6,7 @@ export type Dictamen = 'APROBAR_LIBERAR' | 'RECHAZAR_BLOQUEAR';
 
 export interface Usuario { id: number; email: string; nombre: string; cargo: string; iniciales: string; rol: Rol }
 export interface Config {
-  planta: string; demo: boolean; motivos_pausa: string[]; roles: Record<Rol, string>;
+  planta: string; motivos_pausa: string[]; roles: Record<Rol, string>;
   ubicaciones: { depositos: string[]; sectores: string[]; sectoresConCamara: string[]; racks: string[]; niveles: string[]; camaras: string[] };
 }
 export interface Pendientes { planificar: number; elaborar: number; calidad: number; deposito: number; alertas: number }

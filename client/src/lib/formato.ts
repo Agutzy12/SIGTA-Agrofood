@@ -24,3 +24,7 @@ export const leerNumero = (v: unknown) => { const t = String(v ?? '').trim(); re
 /** Peso de una presentación: 0.5 -> "500 g", 20 -> "20 kg". */
 export const pesoTexto = (kgUnidad: number) => (kgUnidad < 1 ? `${Math.round(kgUnidad * 1000)} g` : `${num(kgUnidad, Number.isInteger(kgUnidad) ? 0 : 1)} kg`);
 export const plural = (n: number, singular: string, pluralTexto = `${singular}s`) => `${n} ${n === 1 ? singular : pluralTexto}`;
+
+/** Unidad en singular cuando la cantidad es 1 ("1 rollo", no "1 rollos"). */
+const SINGULAR: Record<string, string> = { rollos: 'rollo', unidades: 'unidad', bolsas: 'bolsa', cajas: 'caja', pallets: 'pallet' };
+export const unidad = (cantidad: number, nombre: string) => (cantidad === 1 ? SINGULAR[nombre] ?? nombre : nombre);

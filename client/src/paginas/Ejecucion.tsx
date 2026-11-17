@@ -1,4 +1,5 @@
 /** Paso 2 · Elaborar: ejecución de la orden y consumo real por partida (CU-P02). */
+import { IconoProducto } from '../componentes/IconoLinea';
 import { useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -36,7 +37,7 @@ function ListaParaElegir() {
             <thead><tr><th>Orden</th><th>Producto y línea</th><th>Programación</th><th>Estado</th><th></th></tr></thead>
             <tbody>{utiles.map((o) => (
               <tr key={o.id} onClick={() => navegar(`/ejecucion/${o.id}`)}>
-                <td><b>{o.numero}</b></td><td><b>{o.producto_nombre}</b><span className="peq">{o.linea_nombre} · {kg(o.cantidad_kg)}</span></td>
+                <td><b>{o.numero}</b></td><td className="prod-celda"><IconoProducto de={o.producto_nombre} /><b>{o.producto_nombre}</b><span className="peq">{o.linea_nombre} · {kg(o.cantidad_kg)}</span></td>
                 <td className="num">{fechaCorta(o.fecha_proyectada)} · {o.hora_prevista}</td>
                 <td>{o.pausada ? <Pill color="rojo">Pausada</Pill> : <PillOP estado={o.estado} />}</td>
                 <td><Link className="enlace" to={`/ejecucion/${o.id}`}>Abrir →</Link></td>
@@ -95,7 +96,7 @@ function CabeceraOrden({ orden: o }: { orden: Orden }) {
       <Proceso actual={2} hechos={pasosHechos(o.estado)} item={`${o.numero} · ${o.producto_nombre}`} guia={o.estado === 'PLANIFICADA' || enProd} />
       <section className="tarjeta">
         <div className="tarjeta-cab">
-          <div><h2>{o.numero}</h2><p className="sub">Receta {o.receta_codigo} v{o.receta_version} · Objetivo {kg(o.cantidad_kg)}</p></div>
+          <div className="con-prod"><IconoProducto de={o.producto_nombre} grande /><div><h2>{o.numero} · {o.producto_nombre}</h2><p className="sub">Receta {o.receta_codigo} v{o.receta_version} · Objetivo {kg(o.cantidad_kg)}</p></div></div>
           {enProd ? (o.pausada ? <Pill color="rojo">Pausada · {o.motivo_pausa}</Pill> : <Pill color="ambar">En curso · {transcurrido()}</Pill>) : <PillOP estado={o.estado} />}
         </div>
         <div className="rejilla col-3">
@@ -296,8 +297,8 @@ function VistaEjecucion({ orden: o, alCambiar }: { orden: Orden; alCambiar: (o: 
           <div><h2>Consumo real por lote de origen</h2><p className="sub">SIGTA sugiere las partidas por <Termino t="fefo">FEFO</Termino>. Si usaste otra, cambiala. El stock se descuenta recién al finalizar.</p></div>
           <button className="btn" disabled={!editable} onClick={dividir}><Icono n="dividir" /> Dividir consumo</button>
         </div>
-        <table className="tabla">
-          <thead><tr><th>Insumo</th><th>Lote de origen</th><th>Teórico</th><th>Real</th><th></th></tr></thead>
+        <table className="tabla con-campos">
+          <thead><tr><th style={{ width: '34%' }}>Insumo</th><th>Lote de origen</th><th>Teórico</th><th>Real</th><th></th></tr></thead>
           <tbody>{filas.map((f, i) => {
             const item = itemDe(f.insumo_id);
             const mismos = filas.map((x, j) => (x.insumo_id === f.insumo_id ? j : -1)).filter((j) => j >= 0);

@@ -1,6 +1,9 @@
 /**
  * Llamadas a la API. Agrega el token de la sesión y convierte los errores en mensajes legibles.
+ * La API está en el repositorio SIGTA-Agrofood-Back. Su dirección se configura con VITE_API_URL
+ * (por ejemplo https://sigta-back.vercel.app). Sin ella se usa /api del mismo sitio (en desarrollo, Vite la reenvía).
  */
+const BASE_API = `${(import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')}/api`;
 const CLAVE_TOKEN = 'sigta_token';
 
 export const leerToken = () => { try { return localStorage.getItem(CLAVE_TOKEN); } catch { return null; } };
@@ -20,7 +23,7 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown): Promise
   const token = leerToken();
   let respuesta: Response;
   try {
-    respuesta = await fetch(`/api${ruta}`, {
+    respuesta = await fetch(`${BASE_API}${ruta}`, {
       method: metodo,
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: cuerpo === undefined || metodo === 'GET' ? undefined : JSON.stringify(cuerpo),

@@ -4,8 +4,6 @@
  */
 import { PASOS } from '../lib/proceso';
 import { useSesion } from '../contexto/Sesion';
-import { useDialogos } from '../contexto/Dialogos';
-import { USUARIO_DE_ROL } from '../lib/demo';
 import { Icono } from './Icono';
 import { EnLateral } from './Lateral';
 import { FotoRol } from './Rol';
@@ -27,17 +25,9 @@ export function pasosHechos(estado: EstadoOP | null | undefined): number {
  * item: qué se está mirando, para que quede claro de quién es el avance.
  */
 export function Proceso({ actual, hechos = 0, item, guia = true }: { actual: 1 | 2 | 3 | 4; hechos?: number; item?: string; guia?: boolean }) {
-  const { usuario, nombreRol, config, ingresarComo } = useSesion();
-  const { aviso, error } = useDialogos();
+  const { usuario, nombreRol } = useSesion();
   const paso = PASOS[actual - 1];
   const esSuTurno = usuario?.rol === paso.rol;
-
-  const cambiar = async () => {
-    try {
-      const u = await ingresarComo(USUARIO_DE_ROL[paso.rol]);
-      aviso(`Ahora estás como ${u.nombre} (${u.cargo})`, 'ok');
-    } catch (e) { error(e); }
-  };
 
   return (
     <EnLateral>
@@ -67,7 +57,6 @@ export function Proceso({ actual, hechos = 0, item, guia = true }: { actual: 1 |
         {guia && !esSuTurno && usuario && (
           <div className="guia-rol">
             <p>Estás como <b>{nombreRol(usuario.rol)}</b>: podés mirar, pero este paso lo registra {nombreRol(paso.rol)}.</p>
-            {config?.demo && <button className="btn primario chico" onClick={cambiar}><Icono n="cambiar" tam={16} /> Cambiar a {nombreRol(paso.rol)}</button>}
           </div>
         )}
       </section>

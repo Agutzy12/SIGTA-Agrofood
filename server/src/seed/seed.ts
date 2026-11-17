@@ -1,5 +1,5 @@
 /**
- * Datos de ejemplo de la demo.
+ * Datos iniciales del sistema (catálogo, usuarios, stock y un historial de órdenes).
  *
  * 1) Usuarios de ejemplo (con contraseña cifrada).
  * 2) Catálogo: productos, recetas, insumos y partidas (el stock inicial).
@@ -9,8 +9,8 @@
  */
 import { prisma } from '../db.js';
 import { fijarReloj, liberarReloj, ahora } from '../clock.js';
-import { CLAVE_DEMO, USUARIOS_DEMO } from '../config.js';
-import { auditar, aFechaDb, fechaLocal, type UsuarioActual } from '../services/comun.js';
+import { CLAVE_INICIAL, USUARIOS_INICIALES } from '../config.js';
+import { aFechaDb, fechaLocal, type UsuarioActual } from '../services/comun.js';
 import { cifrar } from '../services/auth.js';
 import { armarGtin13 } from '../services/gs1.js';
 import { CATEGORIAS, ESPECIFICACION, INSUMOS, LINEAS, PARTIDAS, PRODUCTOS, SALDOS_FINALES, recetaDe, urlProducto } from './catalogo.js';
@@ -19,7 +19,7 @@ import * as calidad from '../services/calidad.js';
 import * as deposito from '../services/deposito.js';
 
 const persona = (rol: string): UsuarioActual => {
-  const u = USUARIOS_DEMO.find((x) => x.rol === rol)!;
+  const u = USUARIOS_INICIALES.find((x) => x.rol === rol)!;
   return { nombre: u.nombre, rol: u.rol };
 };
 const MARTIN = persona('PRODUCCION');
@@ -37,8 +37,8 @@ const TABLAS = [
 /* ------------------------------------------------------------------ */
 
 export async function cargarUsuarios() {
-  const hash = await cifrar(CLAVE_DEMO);
-  for (const u of USUARIOS_DEMO) {
+  const hash = await cifrar(CLAVE_INICIAL);
+  for (const u of USUARIOS_INICIALES) {
     await prisma.usuario.upsert({
       where: { email: u.email },
       update: { nombre: u.nombre, cargo: u.cargo, iniciales: u.iniciales, rol: u.rol, activo: true },
@@ -264,14 +264,3 @@ export async function asegurarDatos() {
   }
 }
 
-let reiniciando: Promise<unknown> | null = null;
-
-/** Botón "Reiniciar demo": borra los movimientos y vuelve a cargar los datos de ejemplo. */
-export async function reiniciarDemo(usuario: UsuarioActual) {
-  if (!reiniciando) {
-    reiniciando = cargarDatosDeEjemplo().finally(() => { reiniciando = null; });
-  }
-  await reiniciando;
-  await auditar(usuario, 'REINICIO_DEMO', 'DEMO', 'Se restauraron los datos de ejemplo');
-  return { ok: true };
-}

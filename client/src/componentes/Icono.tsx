@@ -59,8 +59,8 @@ export function Icono({ n, tam }: { n: NombreIcono; tam?: number }) {
   );
 }
 
-/** Isotipo de SIGTA: un recorrido que une origen, planta y destino (la trazabilidad). */
 /** Isotipo de SIGTA: la hoja roja tapando "SIG / TA" sobre fondo negro. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- se mantiene la opción "claro" para no romper a quien la pasa
 export function IsotipoSigta(_: { claro?: boolean } = {}) {
   return <img className="isotipo-sigta" src="/img/sigta-icono.svg" alt="" aria-hidden="true" />;
 }
