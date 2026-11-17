@@ -46,6 +46,7 @@
    - Versiones oscuras de cada color para texto (contraste AA sobre blanco) y versiones "suaves" para fondos.
    - Gris carbón #33373A para avisos flotantes y textos. */
 :root {
+  --marca-logo: #1FA34A;   /* el verde del logo de SIGTA: identidad (nombre, foco, selección, línea de la barra) */
   --marca-verde: #4F934E;
   --marca-lima: #96C63A;
   --acero: #57738C;
@@ -1024,3 +1025,28 @@ table.tabla { width: 100%; border-collapse: collapse; }
 :root:not([data-tema="oscuro"]) .sidebar .menu a .paso-n { background: var(--marca-verde); color: #fff; }
 :root:not([data-tema="oscuro"]) .sidebar .menu a.activo .paso-n { background: var(--marca-verde); color: #fff; }
 .sidebar .menu a .paso-n { padding-top: .21em; }
+
+/* =====================================================================================
+   VERDE DEL LOGO (#1FA34A): el color propio de SIGTA.
+   Es más vivo que el verde de la paleta, así que se usa poco y sólo donde habla la marca:
+   el nombre de la app, lo que tiene el foco, el texto seleccionado y la línea bajo la barra de arriba.
+   ===================================================================================== */
+/* Nombre de la app al pasar el cursor */
+.marca a.sigta-titulo { padding: 4px 8px 4px 4px; margin: -4px -8px -4px -4px; transition: background-color .15s; }
+.marca a.sigta-titulo b { transition: color .15s; }
+.marca a.sigta-titulo:hover b, .marca a.sigta-titulo:focus-visible b { color: var(--marca-logo); }
+.marca a.sigta-titulo:hover, .marca a.sigta-titulo:focus-visible { background: rgba(0, 0, 0, .28); }   /* oscurece el fondo para que el verde se lea bien */
+/* Lo que tiene el foco (teclado) y los campos activos */
+:focus-visible { outline-color: var(--marca-logo); }
+.entrada:focus { border-color: var(--marca-logo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--marca-logo) 22%, transparent); }
+/* Texto seleccionado */
+::selection { background: var(--marca-logo); color: #fff; }
+/* Línea bajo la barra de arriba, en los dos modos */
+.topbar, :root:not([data-tema="oscuro"]) .topbar { border-bottom: 3px solid var(--marca-logo); }
+/* Enlaces al pasar el cursor, casillas y botones de opción */
+.enlace:hover { color: var(--marca-logo); }
+:root[data-tema="oscuro"] .enlace:hover { color: #4FCB78; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--marca-logo); }
+.opcion-dictamen.rechazo input { accent-color: var(--rojo); }
+/* Pantalla de ingreso: los números de los pasos llevan el verde del logo que tienen al lado */
+.ingreso .pasos-intro i { background: var(--marca-logo); color: #fff; }
