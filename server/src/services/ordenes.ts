@@ -113,7 +113,9 @@ export interface DatosOrden {
 
 /**
  * Crea una orden nueva o completa un borrador (si viene opId).
- * accion = 'PLANIFICAR' (reserva los insumos) o 'BORRADOR' (queda CREADA y avisa a Compras si falta algo).
+ * accion = 'PLANIFICAR' (reserva los insumos) o 'BORRADOR' (queda CREADA).
+ * Se puede planificar aunque falten insumos: la planta no frena por eso. La orden queda PLANIFICADA,
+ * se avisa a Compras con lo que falta y la elaboración no arranca hasta que llegue lo crítico (ver iniciarProduccion).
  */
 async function guardarOrden(usuario: UsuarioActual, cuerpo: DatosOrden, opId: number | null) {
   const kg = validarKg(cuerpo.cantidad_kg);
@@ -124,9 +126,6 @@ async function guardarOrden(usuario: UsuarioActual, cuerpo: DatosOrden, opId: nu
 
   return tx(async () => {
     const req = await requerimientos(cuerpo.producto_id, kg);
-    if (cuerpo.accion === 'PLANIFICAR' && !req.planificable) {
-      throw noSePuede(`Hay faltantes críticos, no se puede planificar. ${textoFaltantes(req.items)}`);
-    }
     const estado = cuerpo.accion === 'PLANIFICAR' ? 'PLANIFICADA' : 'CREADA';
     const lineaId = Number(cuerpo.linea_id) || req.producto.linea_id;
     const datos = {
@@ -161,8 +160,10 @@ async function guardarOrden(usuario: UsuarioActual, cuerpo: DatosOrden, opId: nu
 
     if (esNueva) await auditar(usuario, 'OP_CREADA', numero, 'Creación de la orden', { op_id: id, resultado: 'OP Creada' });
     if (estado === 'PLANIFICADA') {
-      await auditar(usuario, 'OP_PLANIFICADA', numero, 'Confirmación de disponibilidad', { op_id: id, resultado: 'OP Planificada' });
-    } else if (req.hayFaltantes) {
+      await auditar(usuario, 'OP_PLANIFICADA', numero, req.hayFaltantes ? 'Planificada con faltantes de insumos' : 'Confirmación de disponibilidad',
+        { op_id: id, resultado: 'OP Planificada' });
+    }
+    if (req.hayFaltantes) {
       await auditar(usuario, 'ALERTA_COMPRAS', numero,
         `Compras y Suministros: la ${numero} necesita abastecimiento. ${textoFaltantes(req.items)}`, { op_id: id });
     }
@@ -280,10 +281,27 @@ export async function planificarOrden(usuario: UsuarioActual, id: number) {
   }, op.id);
 }
 
+/** Insumos críticos de una orden que no alcanzan con las partidas liberadas que hay hoy en planta. */
+async function faltantesCriticosEnPlanta(opId: number) {
+  const items = await db().opItem.findMany({ where: { op_id: opId, insumo: { critico: true } }, include: { insumo: true } });
+  const stock = await db().partidaInsumo.groupBy({
+    by: ['insumo_id'], where: { estado: 'LIBERADO', insumo_id: { in: items.map((i) => i.insumo_id) } }, _sum: { cantidad: true },
+  });
+  const hay = new Map(stock.map((x) => [x.insumo_id, x._sum.cantidad ?? 0]));
+  return items
+    .filter((i) => (hay.get(i.insumo_id) ?? 0) < i.cantidad_teorica)
+    .map((i) => `${i.insumo.nombre}: faltan ${redondear(i.cantidad_teorica - (hay.get(i.insumo_id) ?? 0))} ${i.insumo.unidad}`);
+}
+
 export function iniciarProduccion(usuario: UsuarioActual, id: number) {
   return tx(async () => {
     const op = await getOpRow(id);
     if (op.estado !== 'PLANIFICADA') throw noSePuede(`La orden debe estar PLANIFICADA para iniciar (actual: ${op.estado})`);
+    // Se pudo planificar con faltantes; para elaborar tiene que haber en planta lo crítico
+    const faltan = await faltantesCriticosEnPlanta(op.id);
+    if (faltan.length) {
+      throw noSePuede(`Todavía no se puede elaborar: falta en planta ${faltan.join('; ')}. La orden sigue planificada; Compras ya fue avisada.`);
+    }
     const producto = await db().producto.findUniqueOrThrow({ where: { id: op.producto_id } });
 
     // Código del lote: L-[producto]-[año][semana]-[número de lote de la semana]

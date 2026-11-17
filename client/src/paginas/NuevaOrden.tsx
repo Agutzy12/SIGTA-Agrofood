@@ -87,7 +87,10 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
     setGuardando(true);
     try {
       const orden = borrador ? await api.put<Orden>(`/ordenes/${borrador.id}`, cuerpo) : await api.post<Orden>('/ordenes', cuerpo);
-      if (accion === 'PLANIFICAR') {
+      if (accion === 'PLANIFICAR' && verificacion && !verificacion.planificable) {
+        aviso(`${orden.numero} planificada. Se avisó a Compras: se podrá elaborar cuando lleguen los insumos.`, 'ok');
+        navegar('/panel');
+      } else if (accion === 'PLANIFICAR') {
         aviso(`${orden.numero} planificada. Siguiente paso: elaborar.`, 'ok');
         navegar(`/ejecucion/${orden.id}`);
       } else {
@@ -156,13 +159,13 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
         <div className="tarjeta-cab">
           <div><h2>Insumos</h2>
             <p className="sub">{kgPedidos > 0 ? `Receta para ${num(kgPedidos)} kg · se obtienen unas ${num(unidades)} unidades de ${pesoTexto(producto.presentacion_kg)} (${pallets} ${pallets === 1 ? 'pallet' : 'pallets'})` : 'Ingresá una cantidad para calcular.'}</p></div>
-          {verificacion && kgPedidos > 0 && <span><span className="fraccion" style={{ fontSize: 30 }}>{verificacion.criticosOk}/{verificacion.criticosTotal}</span> <span style={{ color: 'var(--texto-suave)' }}>insumos críticos disponibles</span></span>}
+          {verificacion && kgPedidos > 0 && <span><span className="fraccion" style={{ fontSize: 30, color: verificacion.planificable ? undefined : 'var(--ambar-oscuro)' }}>{verificacion.criticosOk}/{verificacion.criticosTotal}</span> <span style={{ color: 'var(--texto-suave)' }}>insumos críticos disponibles</span></span>}
         </div>
         {!(kgPedidos > 0) ? null : !verificacion ? <Cargando /> : (<>
-          <div className={`aviso ${verificacion.planificable ? 'verde' : 'rojo'}`} style={{ marginBottom: 0 }}>
+          <div className={`aviso ${verificacion.planificable ? 'verde' : 'ambar'}`} style={{ marginBottom: 0 }}>
             <Icono n={verificacion.planificable ? 'checkCirculo' : 'info'} />
-            <div><b>{verificacion.planificable ? (verificacion.hayFaltantes ? 'Sin faltantes críticos' : 'Sin faltantes') : 'Hay faltantes críticos'}</b>
-              {verificacion.planificable ? (verificacion.hayFaltantes ? 'Podés planificar la orden. Falta un insumo no crítico: al guardar se avisa a Compras.' : 'Hay stock de todos los insumos: podés planificar la orden.') : 'No se puede planificar. Guardá un borrador: se avisa a Compras automáticamente.'}</div>
+            <div><b>{verificacion.planificable ? (verificacion.hayFaltantes ? 'Sin faltantes críticos' : 'Sin faltantes') : 'Faltan insumos críticos'}</b>
+              {verificacion.planificable ? (verificacion.hayFaltantes ? 'Podés planificar la orden. Falta un insumo no crítico: al guardar se avisa a Compras.' : 'Hay stock de todos los insumos: podés planificar la orden.') : 'Podés planificar igual: la orden queda en el plan, se avisa a Compras y la elaboración arranca cuando llegue lo que falta.'}</div>
           </div>
           <table className="tabla" style={{ marginTop: 16 }}>
             <thead><tr><th>Materia prima / empaque</th><th>Requerido</th><th>Disponible</th><th>Faltante</th><th>Estado</th></tr></thead>
@@ -182,7 +185,7 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
         <div className="botones">
           <Link className="btn" to="/panel">Cancelar</Link>
           <button className="btn" disabled={!habilitado || guardando || !(kgPedidos > 0)} title={titulo('guardar órdenes')} onClick={() => guardar('BORRADOR')}><Icono n="guardar" /> Guardar borrador</button>
-          <button className="btn primario" disabled={!habilitado || guardando || !verificacion?.planificable} title={titulo('planificar órdenes')} onClick={() => guardar('PLANIFICAR')}><Icono n="check" /> Confirmar y planificar</button>
+          <button className="btn primario" disabled={!habilitado || guardando || !verificacion || !(kgPedidos > 0)} title={titulo('planificar órdenes')} onClick={() => guardar('PLANIFICAR')}><Icono n="check" /> {verificacion && !verificacion.planificable ? 'Planificar igual' : 'Confirmar y planificar'}</button>
         </div>
       </div>
     </>

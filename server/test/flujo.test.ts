@@ -152,14 +152,25 @@ describe('CU-P01 Registrar orden de producción', () => {
     expect(r.planificable).toBe(true);
   });
 
-  test('con faltantes críticos no se puede planificar, pero sí guardar borrador (y avisa a Compras)', async () => {
+  test('con faltantes críticos igual se puede planificar: avisa a Compras y no deja elaborar hasta que llegue lo que falta', async () => {
     const plan = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' });
-    expect(plan.estado).toBe(409);
+    expect(plan.estado, JSON.stringify(plan.cuerpo)).toBe(200);
+    expect(plan.cuerpo.estado).toBe('PLANIFICADA');
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string }[];
+    expect(alertas.some((a) => /Compras/i.test(a.detalle) && a.detalle.includes(plan.cuerpo.numero))).toBe(true);
+    const iniciar = await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/iniciar`);
+    expect(iniciar.estado).toBe(409);
+    expect(iniciar.cuerpo.error).toMatch(/^Todavía no se puede elaborar: falta en planta/);
+    // se cancela para no dejar reservados los insumos de una orden de prueba
+    expect((await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/cancelar`, { motivo: 'Prueba' })).estado).toBe(200);
+  });
+
+  test('un borrador con faltantes también avisa a Compras', async () => {
     const borrador = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'BORRADOR' });
     expect(borrador.estado).toBe(200);
     expect(borrador.cuerpo.estado).toBe('CREADA');
     const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string }[];
-    expect(alertas.some((a) => /Compras/i.test(a.detalle))).toBe(true);
+    expect(alertas.some((a) => a.detalle.includes(borrador.cuerpo.numero))).toBe(true);
   });
 
   test('un borrador se puede completar y planificar después', async () => {

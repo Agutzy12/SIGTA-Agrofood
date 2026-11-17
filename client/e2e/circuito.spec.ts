@@ -36,10 +36,10 @@ test('circuito completo: de la orden al stock vendible, con la trazabilidad fina
   await expect(page.getByTestId('ficha-producto')).toContainText('Línea Pastas Secas');
   await page.getByLabel('Cantidad *').fill('1000');
   await expect(page.getByText('Sin faltantes')).toBeVisible();
-  // con una cantidad enorme no deja planificar
+  // con una cantidad enorme avisa que faltan insumos, pero deja planificar igual
   await page.getByLabel('Cantidad *').fill('100000');
-  await expect(page.getByText('Hay faltantes críticos')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Confirmar y planificar' })).toBeDisabled();
+  await expect(page.getByText('Faltan insumos críticos')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Planificar igual' })).toBeEnabled();
   await page.getByLabel('Cantidad *').fill('1000');
   await expect(page.getByText('Sin faltantes')).toBeVisible();
   await page.getByRole('button', { name: 'Confirmar y planificar' }).click();
