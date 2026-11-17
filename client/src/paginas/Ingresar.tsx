@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSesion } from '../contexto/Sesion';
 import { useDialogos } from '../contexto/Dialogos';
-import { LogoEmpresa, useTema } from '../contexto/Tema';
+import { LogoEmpresa, WEB_AGRIFOOD, useTema } from '../contexto/Tema';
 import { api } from '../lib/api';
 import { QUE_HACE } from '../lib/roles';
 import { PASOS } from '../lib/proceso';
@@ -57,7 +57,7 @@ export function Ingresar() {
         <ol className="pasos-intro">
           {PASOS.map((p) => <li key={p.n}><i>{p.n}</i><span><b>{p.titulo}</b><em>{AREA[p.rol]}</em></span></li>)}
         </ol>
-        <div className="cliente"><LogoEmpresa alto={40} siempreClaro /><span>Para Agrifood Argentina S.A.<br />Módulo de Producción y Trazabilidad</span></div>
+        <div className="cliente"><a className="logo-agrifood" href={WEB_AGRIFOOD} target="_blank" rel="noreferrer" title="Ir a agrifood-argentina.com"><LogoEmpresa alto={40} siempreClaro /></a><span>Para Agrifood Argentina S.A.<br />Módulo de Producción y Trazabilidad</span></div>
       </section>
 
       <section className="formulario">
@@ -79,8 +79,8 @@ export function Ingresar() {
           </div>
         )}
 
-        <details className="ingreso-manual" open>
-          <summary>{accesos ? 'Ingresar con email y contraseña' : 'Ingresar'}</summary>
+        <div className="ingreso-manual">
+          <h2 className="ingreso-manual-titulo">{accesos ? 'Ingresar con email y contraseña' : 'Ingresar'}</h2>
           <form onSubmit={enviar} className="rejilla" style={{ gap: 14, marginTop: 14 }}>
             <div className="campo"><label htmlFor="email">Email</label>
               <input id="email" className="entrada" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
@@ -88,7 +88,7 @@ export function Ingresar() {
               <input id="clave" className="entrada" type="password" autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} required /></div>
             <button className="btn primario" type="submit" disabled={ocupado}>{ocupado && !entrando ? 'Entrando…' : 'Ingresar'}</button>
           </form>
-        </details>
+        </div>
       </section>
     </div>
   );

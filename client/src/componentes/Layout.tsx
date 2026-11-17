@@ -15,7 +15,7 @@ import { Pill } from './Comunes';
 import { BotonInstalar } from './InstalarApp';
 import { LateralContexto } from './Lateral';
 import { FotoRol } from './Rol';
-import { LogoEmpresa, useTema } from '../contexto/Tema';
+import { LogoEmpresa, WEB_AGRIFOOD, useTema } from '../contexto/Tema';
 
 const activo = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 /** Área que registra cada paso (texto corto para el menú). */
@@ -52,7 +52,7 @@ export function Marca() {
     <div className="marca">
       <Link to="/ingresar" className="sigta-titulo" title="Volver al inicio de sesión" onClick={() => salir()}><IsotipoSigta /><b>SIGTA</b></Link>
       <div className="bajada">Gestión y Trazabilidad Alimentaria</div>
-      <div className="para"><span>para</span><LogoEmpresa siempreClaro /></div>
+      <div className="para"><span>para</span><a className="logo-agrifood" href={WEB_AGRIFOOD} target="_blank" rel="noreferrer" title="Ir a agrifood-argentina.com"><LogoEmpresa siempreClaro /></a></div>
     </div>
   );
 }

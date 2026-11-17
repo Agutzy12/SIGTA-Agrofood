@@ -34,7 +34,7 @@
    Los colores están como variables (:root) para cambiarlos en un solo lugar.
 
    PALETA (teoría del color)
-   Base de marca: lima #96C63A · verde #4F934E · naranja #F39B00 · gris cálido #DCDAD7 · azul acero #57738C
+   Base de marca: lima #A6CB72 (más clara y menos saturada que la #96C63A original) · verde #4F934E · naranja #F39B00 · gris cálido #DCDAD7 · azul acero #57738C
    - Verde y lima son vecinos en el círculo cromático (análogos): dan la identidad "de campo".
    - El naranja es el acento cálido: se usa poco (acción principal y "en curso") para que llame la atención.
    - El azul acero es el complementario del naranja: lo equilibra y marca lo que espera o informa (cuarentena).
@@ -48,7 +48,7 @@
 :root {
   --marca-logo: #1FA34A;   /* el verde del logo de SIGTA: identidad (nombre, foco, selección, línea de la barra) */
   --marca-verde: #4F934E;
-  --marca-lima: #96C63A;
+  --marca-lima: #A6CB72;
   --acero: #57738C;
   --ambar: #F39B00;
   --ambar-oscuro: #8A5600;
@@ -56,7 +56,7 @@
   --ambar-borde: #F3CF8A;
   --ambar-hover: #DD8D00;
   --sobre-ambar: #2A2100;
-  --lima-suave: #EEF6DD;
+  --lima-suave: #F0F5E6;
 
   --fondo: #ECEBE8;
   --superficie: #ffffff;
@@ -89,7 +89,7 @@
   --ambar-oscuro: #F6B645;
   --ambar-suave: rgba(243, 155, 0, .15);
   --ambar-borde: rgba(243, 155, 0, .45);
-  --lima-suave: rgba(150, 198, 58, .14);
+  --lima-suave: rgba(166, 203, 114, .14);
 
   --fondo: #17191B;
   --superficie: #202427;
@@ -617,9 +617,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .acceso-texto b { display: block; font-size: 15.5px; }
   .acceso-texto small { display: block; color: var(--texto-suave); font-size: 13px; margin-top: 1px; }
   .acceso-ir { color: var(--texto-suave); font-size: 13px; white-space: nowrap; }
-  .ingreso-manual summary { cursor: pointer; color: var(--texto); font-weight: 600; font-size: 18px; list-style: none; }
-  .ingreso-manual summary::-webkit-details-marker { display: none; }
-  .ingreso-manual[open] summary { color: var(--texto); font-size: 18px; }
+  .ingreso .formulario .ingreso-manual-titulo { color: var(--texto); font-weight: 600; font-size: 18px; margin: 0; }
 
   /* ---------- Cómo funciona ---------- */
   .flujo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -759,7 +757,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
     -webkit-mask: var(--dibujo) right 64% / auto 200% no-repeat; mask: var(--dibujo) right 64% / auto 200% no-repeat; }
   .banner.produccion { --tono: #F39B00; --tono-tinta: #2A2100; --tono-tinta-2: rgba(42, 33, 0, .82); --dibujo: url('/img/grabados/planta.svg'); }
   .banner.calidad { --tono: #57738C; --dibujo: url('/img/grabados/campo.svg'); }
-  .banner.deposito { --tono: #96C63A; --tono-tinta: #1F2A0C; --tono-tinta-2: rgba(31, 42, 12, .82); --dibujo: url('/img/grabados/deposito.svg'); }
+  .banner.deposito { --tono: var(--marca-lima); --tono-tinta: #1F2A0C; --tono-tinta-2: rgba(31, 42, 12, .82); --dibujo: url('/img/grabados/deposito.svg'); }
   .banner.consulta { --tono: #33373A; --dibujo: url('/img/grabados/granja.svg'); }
   .banner .miga { color: var(--tono-tinta-2) !important; }
   .banner .cabecera h1 { color: var(--tono-tinta); }
@@ -1050,3 +1048,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--marca-logo); }
 .opcion-dictamen.rechazo input { accent-color: var(--rojo); }
 /* Pantalla de ingreso: los números de los pasos llevan el verde del logo que tienen al lado */
 .ingreso .pasos-intro i { background: var(--marca-logo); color: #fff; }
+
+/* =====================================================================================
+   MODO OSCURO · menú lateral con el verde del logo (#1FA34A)
+   Sólo en el menú y sólo en lo que ya era verde: la opción activa, los números de los pasos y los títulos.
+   El resto de la página conserva la lima. El texto sobre el verde es casi negro para que se lea bien.
+   ===================================================================================== */
+:root[data-tema="oscuro"] .sidebar .menu a.activo { background: var(--marca-logo); color: #082010; }
+:root[data-tema="oscuro"] .sidebar .menu a.activo .quien { color: #0E3A1C; }
+:root[data-tema="oscuro"] .sidebar .menu a .paso-n { background: var(--marca-logo); color: #082010; }
+:root[data-tema="oscuro"] .sidebar .menu a.activo .paso-n { background: #082010; color: var(--marca-logo); }
+:root[data-tema="oscuro"] .sidebar .menu-titulo { color: var(--marca-logo); }
+
+/* Logo de Agrifood: enlace a su web */
+a.logo-agrifood { display: inline-flex; border-radius: 10px; transition: transform .15s, box-shadow .15s; }
+a.logo-agrifood:hover { transform: translateY(-1px); box-shadow: 0 0 0 2px var(--marca-logo); }
