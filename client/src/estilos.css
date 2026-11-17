@@ -1064,3 +1064,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--marca-logo); }
 /* Logo de Agrifood: enlace a su web */
 a.logo-agrifood { display: inline-flex; border-radius: 10px; transition: transform .15s, box-shadow .15s; }
 a.logo-agrifood:hover { transform: translateY(-1px); box-shadow: 0 0 0 2px var(--marca-logo); }
+
+/* ---------- Notificaciones de la campana: se tocan y llevan a donde está el problema ---------- */
+button.alerta-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--linea); font: inherit; color: inherit; cursor: pointer; }
+button.alerta-item:last-child { border-bottom: 0; }
+button.alerta-item:hover, button.alerta-item:focus-visible { background: var(--lima-suave); }
+.alerta-item .alerta-ver { float: right; color: var(--verde); font-weight: 600; }
+/* Fila de un insumo que falta en planta */
+.tabla tr.fila-falta td:first-child b { color: var(--rojo); }
+/* Al llegar a una sección por enlace (#para-resolver, #faltantes) queda a la vista bajo la barra de arriba */
+#para-resolver, #faltantes { scroll-margin-top: 90px; }

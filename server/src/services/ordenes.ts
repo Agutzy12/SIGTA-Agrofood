@@ -245,8 +245,18 @@ export async function getOrden(id: number) {
       insumo_id: oi.insumo_id, cantidad_teorica: oi.cantidad_teorica, codigo: oi.insumo.codigo, nombre: oi.insumo.nombre,
       tipo: oi.insumo.tipo, unidad: oi.insumo.unidad, critico: oi.insumo.critico,
       partidas: undefined as Partida[] | undefined,
+      en_planta: undefined as number | undefined,
     }))
     .sort(porTipoYCantidad((i) => i.cantidad_teorica));
+
+  // Orden planificada: cuánto hay hoy en planta de cada insumo, para mostrar qué falta antes de elaborar
+  if (op.estado === 'PLANIFICADA') {
+    const stock = await db().partidaInsumo.groupBy({
+      by: ['insumo_id'], where: { estado: 'LIBERADO', insumo_id: { in: items.map((i) => i.insumo_id) } }, _sum: { cantidad: true },
+    });
+    const hay = new Map(stock.map((x) => [x.insumo_id, x._sum.cantidad ?? 0]));
+    for (const item of items) item.en_planta = redondear(hay.get(item.insumo_id) ?? 0);
+  }
 
   let consumo_sugerido: FilaConsumo[] | undefined;
   if (op.estado === 'EN_PRODUCCION') {

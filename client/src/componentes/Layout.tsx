@@ -80,10 +80,25 @@ export function Layout() {
   const [abierto, setAbierto] = useState<'' | 'usuario' | 'alertas'>('');
   const [lateral, setLateral] = useState<HTMLElement | null>(null);
   const [cabecera, setCabecera] = useState<HTMLElement | null>(null);
-  const [alertas, setAlertas] = useState<{ id: number; detalle: string; usuario: string; fecha: string }[] | null>(null);
+  const [alertas, setAlertas] = useState<{ id: number; detalle: string; usuario: string; fecha: string; destino?: string }[] | null>(null);
 
   // Cada vez que se cambia de pantalla: se actualizan los números del menú y se cierra el menú del celular
   useEffect(() => { recargarPendientes(); setMenuAbierto(false); setAbierto(''); window.scrollTo(0, 0); }, [ubicacion.pathname, ubicacion.search, recargarPendientes]);
+
+  // Si la dirección trae una sección (#para-resolver, #faltantes), se baja hasta ella cuando la pantalla terminó de cargar
+  useEffect(() => {
+    const id = ubicacion.hash.slice(1);
+    if (!id) return;
+    let intentos = 0;
+    const buscar = window.setInterval(() => {
+      const destino = document.getElementById(id);
+      if (destino || ++intentos > 40) {
+        window.clearInterval(buscar);
+        destino?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 75);
+    return () => window.clearInterval(buscar);
+  }, [ubicacion.hash, ubicacion.key]);
 
   if (!usuario || !config) return null;
   const seccion = seccionDe(ubicacion.pathname);
@@ -163,7 +178,9 @@ export function Layout() {
           <Desplegable abierto={abierto === 'alertas'} cerrar={() => setAbierto('')}>
             <h4>Alertas recientes</h4>
             {alertas === null ? <div className="vacio">Cargando…</div>
-              : alertas.length ? alertas.map((a) => <div key={a.id} className="alerta-item">{a.detalle}<small>{a.usuario} · {fechaHora(a.fecha)}</small></div>)
+              : alertas.length ? alertas.map((a) => a.destino
+                ? <button key={a.id} className="alerta-item" onClick={() => { setAbierto(''); navegar(a.destino!); }}>{a.detalle}<small>{a.usuario} · {fechaHora(a.fecha)}<span className="alerta-ver">Ver dónde →</span></small></button>
+                : <div key={a.id} className="alerta-item">{a.detalle}<small>{a.usuario} · {fechaHora(a.fecha)}</small></div>)
                 : <div className="vacio">No hay alertas.</div>}
           </Desplegable>
         </header>

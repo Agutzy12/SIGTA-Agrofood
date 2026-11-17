@@ -205,3 +205,36 @@ test('en el celular el menú se despliega y no hay desplazamiento horizontal', a
   await page.locator('.sidebar').getByRole('link', { name: /Elaborar/ }).click();
   await expect(page.getByRole('heading', { name: 'Elaborar', level: 1 })).toBeVisible();
 });
+
+test('las notificaciones llevan a donde está el problema y se puede planificar aunque falten insumos', async ({ page }) => {
+  await ingresarComo(page, /Supervisor de producción/);
+  // planificar con faltantes: queda planificada y avisa a Compras
+  await page.goto('/ordenes/nueva');
+  await page.getByLabel('Cantidad *').fill('90000');
+  await expect(page.getByText('Faltan insumos críticos')).toBeVisible();
+  await page.getByRole('button', { name: 'Planificar igual' }).click();
+  await expect(page).toHaveURL(/\/panel/);
+  const numero = (await page.locator('.tostada').first().innerText()).match(/OP-\d{4}-\d{5}/)![0];
+
+  // la notificación de esa orden lleva a la orden, que muestra qué falta y no deja iniciar
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: numero }).click();
+  await expect(page).toHaveURL(/\/ejecucion\/\d+/);
+  await expect(page.getByText(/Todavía no se puede elaborar: faltan/)).toBeVisible();
+  await expect(page.locator('tr.fila-falta').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Iniciar elaboración' })).toBeDisabled();
+
+  // la de un lote rechazado lleva a su trazabilidad
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: 'Jefatura de planta' }).first().click();
+  await expect(page).toHaveURL(/\/trazabilidad\?q=/);
+  await expect(page.getByRole('heading', { name: 'Recorrido del lote' })).toBeVisible();
+
+  // se cancela la orden de prueba para no dejar insumos reservados
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: numero }).click();
+  await page.getByRole('button', { name: 'Cancelar orden' }).click();
+  await page.getByLabel('Motivo de la cancelación').fill('Prueba automática');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar orden' }).click();
+  await expect(page).toHaveURL(/\/panel/);
+});

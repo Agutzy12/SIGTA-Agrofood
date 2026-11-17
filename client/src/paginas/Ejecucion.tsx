@@ -135,18 +135,32 @@ function VistaPlanificada({ orden: o, alCambiar }: { orden: Orden; alCambiar: (o
     }],
   });
 
+  const falta = (i: Orden['items'][number]) => Math.max(0, i.cantidad_teorica - (i.en_planta ?? i.cantidad_teorica));
+  const faltanCriticos = o.items.filter((i) => i.critico && falta(i) > 0);
+  const hayFaltantes = o.items.some((i) => falta(i) > 0);
   return (
     <>
+      {faltanCriticos.length > 0 && (
+        <div className="aviso ambar" id="faltantes"><Icono n="info" tam={22} /><div><b>Todavía no se puede elaborar: faltan {faltanCriticos.length === 1 ? 'un insumo crítico' : `${faltanCriticos.length} insumos críticos`}</b>
+          La orden quedó planificada y Compras fue avisada. Cuando llegue lo que falta (marcado abajo), se puede iniciar la elaboración.</div></div>
+      )}
       <section className="tarjeta"><h2>Insumos previstos</h2><p className="sub">Según la receta. Las <Termino t="partida">partidas</Termino> se eligen al iniciar.</p>
-        <table className="tabla" style={{ marginTop: 16 }}><thead><tr><th>Insumo</th><th>Teórico</th></tr></thead>
+        <table className="tabla" style={{ marginTop: 16 }}><thead><tr><th>Insumo</th><th>Teórico</th>{hayFaltantes && <><th>En planta</th><th>Falta</th></>}</tr></thead>
           <tbody>{o.items.map((i) => (
-            <tr key={i.insumo_id}><td><b>{i.nombre}</b><span className="peq">{i.codigo} · {i.tipo === 'MP' ? 'Materia prima' : i.critico ? 'Empaque crítico' : 'Empaque'}</span></td><td className="num">{num(i.cantidad_teorica)} {i.unidad}</td></tr>
+            <tr key={i.insumo_id} className={falta(i) > 0 ? 'fila-falta' : undefined}>
+              <td><b>{i.nombre}</b><span className="peq">{i.codigo} · {i.tipo === 'MP' ? 'Materia prima' : i.critico ? 'Empaque crítico' : 'Empaque'}</span></td>
+              <td className="num">{num(i.cantidad_teorica)} {i.unidad}</td>
+              {hayFaltantes && <>
+                <td className="num">{num(i.en_planta ?? 0)} {i.unidad}</td>
+                <td>{falta(i) > 0 ? <Pill color={i.critico ? 'rojo' : 'ambar'}>{num(falta(i))} {i.unidad}{i.critico ? ' · crítico' : ''}</Pill> : <Pill color="verde">Alcanza</Pill>}</td>
+              </>}
+            </tr>
           ))}</tbody></table>
       </section>
       <div className="barra-acciones"><span className="nota">Al iniciar se asigna el número de lote y su vencimiento.</span>
         <div className="botones">
           <button className="btn peligro" disabled={!habilitado} title={titulo} onClick={cancelar}>Cancelar orden</button>
-          <button className="btn primario" disabled={!habilitado} title={titulo} onClick={iniciar}><Icono n="play" /> Iniciar elaboración</button>
+          <button className="btn primario" disabled={!habilitado || faltanCriticos.length > 0} title={faltanCriticos.length ? 'Falta en planta un insumo crítico' : titulo} onClick={iniciar}><Icono n="play" /> Iniciar elaboración</button>
         </div>
       </div>
     </>

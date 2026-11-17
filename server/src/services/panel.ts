@@ -1,6 +1,7 @@
 /**
  * Panel general de producción (indicadores y avisos) y contadores del menú.
  */
+import type { Prisma } from '@prisma/client';
 import { db } from '../db.js';
 import { ahora } from '../clock.js';
 import { OBJETIVO_DIARIO_KG, PLANTA } from '../config.js';
@@ -120,5 +121,30 @@ export async function avisarCompras(usuario: UsuarioActual, insumoId: number) {
   return { ok: true };
 }
 
-/** Últimas alertas (campanita de la barra superior). */
-export const listAlertas = () => db().auditoria.findMany({ where: { accion: { startsWith: 'ALERTA' } }, orderBy: { id: 'desc' }, take: 8 });
+/**
+ * Últimas alertas (campanita de la barra superior).
+ * Cada una trae `destino`: la pantalla donde se ve el problema, para ir directo al tocarla.
+ */
+export async function listAlertas() {
+  const alertas = await db().auditoria.findMany({ where: { accion: { startsWith: 'ALERTA' } }, orderBy: { id: 'desc' }, take: 8 });
+  const ids = [...new Set(alertas.map((a) => a.op_id).filter((x): x is number => x != null))];
+  const ordenes = new Map((await db().ordenProduccion.findMany({ where: { id: { in: ids } }, include: { lote: true } })).map((o) => [o.id, o]));
+  return alertas.map((a) => ({ ...a, destino: destinoDeAlerta(a, a.op_id != null ? ordenes.get(a.op_id) : undefined) }));
+}
+
+type OrdenConLote = Prisma.OrdenProduccionGetPayload<{ include: { lote: true } }>;
+
+/** A dónde lleva una alerta: la orden con los insumos que faltan, el lote con el desvío o el stock bajo del Panel. */
+function destinoDeAlerta(a: { accion: string; entidad: string | null }, op?: OrdenConLote): string {
+  const traza = (q: string) => `/trazabilidad?q=${encodeURIComponent(q)}`;
+  if (a.accion === 'ALERTA_NO_CONFORMIDAD') return traza(a.entidad ?? op?.lote?.codigo ?? op?.numero ?? '');
+  if (op) {
+    switch (op.estado) {
+      case 'CREADA': return `/ordenes/${op.id}`;                         // borrador: muestra la tabla de faltantes
+      case 'PLANIFICADA': case 'EN_PRODUCCION': return `/ejecucion/${op.id}`; // insumos previstos con lo que falta en planta
+      case 'EN_CONTROL_CALIDAD': return op.lote ? `/calidad/${op.lote.id}` : traza(op.numero);
+      default: return traza(op.lote?.codigo ?? op.numero);
+    }
+  }
+  return '/panel#para-resolver';                                         // aviso de stock bajo de un insumo
+}

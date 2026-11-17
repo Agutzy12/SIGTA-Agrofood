@@ -23,6 +23,8 @@ export interface Partida { id: number; nro_lote: string; proveedor: string | nul
 
 export interface ItemOrden {
   insumo_id: number; cantidad_teorica: number; codigo: string; nombre: string; tipo: 'MP' | 'ME'; unidad: string; critico: boolean; partidas?: Partida[];
+  /** Sólo en órdenes PLANIFICADAS: cuánto hay hoy en planta (partidas liberadas). */
+  en_planta?: number;
 }
 export interface FilaConsumo { insumo_id: number; partida_id: number | null; cantidad: number }
 

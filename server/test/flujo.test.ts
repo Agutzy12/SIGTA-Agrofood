@@ -165,6 +165,21 @@ describe('CU-P01 Registrar orden de producción', () => {
     expect((await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/cancelar`, { motivo: 'Prueba' })).estado).toBe(200);
   });
 
+  test('cada alerta lleva a la pantalla donde se ve el problema', async () => {
+    const plan = (await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 90000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' })).cuerpo;
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string; destino: string }[];
+    expect(alertas.find((a) => a.detalle.includes(plan.numero))?.destino).toBe(`/ejecucion/${plan.id}`);
+    // la orden planificada muestra cuánto hay en planta de cada insumo
+    const orden = (await api(PROD, 'get', `/ordenes/${plan.id}`)).cuerpo as { items: { cantidad_teorica: number; en_planta: number; critico: boolean }[] };
+    expect(orden.items.every((i) => typeof i.en_planta === 'number')).toBe(true);
+    expect(orden.items.some((i) => i.critico && i.en_planta < i.cantidad_teorica)).toBe(true);
+    await api(PROD, 'post', `/ordenes/${plan.id}/cancelar`, { motivo: 'Prueba' });
+    // aviso de stock bajo de un insumo: va al Panel
+    await api(PROD, 'post', '/panel/avisar-compras', { insumo_id: 1 });
+    const ultima = ((await api(PROD, 'get', '/alertas')).cuerpo as { destino: string }[])[0];
+    expect(ultima.destino).toBe('/panel#para-resolver');
+  });
+
   test('un borrador con faltantes también avisa a Compras', async () => {
     const borrador = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'BORRADOR' });
     expect(borrador.estado).toBe(200);

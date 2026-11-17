@@ -172,11 +172,11 @@ export function Panel() {
       </section>
 
       {(stock.length > 0 || cuarentena) && (
-        <section className="tarjeta atencion">
+        <section className="tarjeta atencion" id="para-resolver">
           <h2>Para resolver</h2>
           {stock.length > 0 && (
             <div className="atencion-caja"><b>Stock bajo · {plural(panel.atencion.stockBajoTotal, 'insumo')}</b>
-              {stock.map((i) => <div key={i.insumo_id}>{i.nombre}: {num(i.disponible)} {i.unidad} (mínimo {num(i.minimo)})</div>)}
+              {stock.map((i) => <div key={i.insumo_id}>{i.nombre}: {i.disponible < 0 ? `faltan ${num(-i.disponible)} ${i.unidad} para las órdenes planificadas` : `${num(i.disponible)} ${i.unidad} (mínimo ${num(i.minimo)})`}</div>)}
               <button className="enlace" onClick={avisarCompras} style={{ marginTop: 6 }}>Avisar a Compras →</button></div>
           )}
           {cuarentena && (
