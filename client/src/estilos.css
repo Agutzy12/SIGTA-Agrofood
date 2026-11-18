@@ -1074,3 +1074,9 @@ button.alerta-item:hover, button.alerta-item:focus-visible { background: var(--l
 .tabla tr.fila-falta td:first-child b { color: var(--rojo); }
 /* Al llegar a una sección por enlace (#para-resolver, #faltantes) queda a la vista bajo la barra de arriba */
 #para-resolver, #faltantes { scroll-margin-top: 90px; }
+
+/* Notificaciones vigentes: título, detalle y una franja según la gravedad */
+button.alerta-item { padding-left: 14px; border-left: 3px solid transparent; }
+button.alerta-item.alta { border-left-color: var(--rojo); }
+button.alerta-item.media { border-left-color: var(--ambar); }
+button.alerta-item b { display: block; margin-bottom: 2px; }

@@ -226,7 +226,7 @@ test('las notificaciones llevan a donde está el problema y se puede planificar 
 
   // la de un lote rechazado lleva a su trazabilidad
   await page.getByRole('button', { name: 'Alertas' }).click();
-  await page.locator('button.alerta-item', { hasText: 'Jefatura de planta' }).first().click();
+  await page.locator('button.alerta-item', { hasText: 'Lote rechazado' }).first().click();
   await expect(page).toHaveURL(/\/trazabilidad\?q=/);
   await expect(page.getByRole('heading', { name: 'Recorrido del lote' })).toBeVisible();
 

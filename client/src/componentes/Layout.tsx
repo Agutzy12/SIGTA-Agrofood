@@ -9,7 +9,7 @@ import { api } from '../lib/api';
 import { fechaHora, fechaLarga } from '../lib/formato';
 import { PASOS } from '../lib/proceso';
 import { QUE_HACE } from '../lib/roles';
-import type { Pendientes, Rol } from '../lib/tipos';
+import type { Pendientes, Rol, Alerta } from '../lib/tipos';
 import { Icono, IsotipoSigta, type NombreIcono } from './Icono';
 import { Pill } from './Comunes';
 import { BotonInstalar } from './InstalarApp';
@@ -80,7 +80,7 @@ export function Layout() {
   const [abierto, setAbierto] = useState<'' | 'usuario' | 'alertas'>('');
   const [lateral, setLateral] = useState<HTMLElement | null>(null);
   const [cabecera, setCabecera] = useState<HTMLElement | null>(null);
-  const [alertas, setAlertas] = useState<{ id: number; detalle: string; usuario: string; fecha: string; destino?: string }[] | null>(null);
+  const [alertas, setAlertas] = useState<Alerta[] | null>(null);
 
   // Cada vez que se cambia de pantalla: se actualizan los números del menú y se cierra el menú del celular
   useEffect(() => { recargarPendientes(); setMenuAbierto(false); setAbierto(''); window.scrollTo(0, 0); }, [ubicacion.pathname, ubicacion.search, recargarPendientes]);
@@ -176,12 +176,14 @@ export function Layout() {
           </Desplegable>
 
           <Desplegable abierto={abierto === 'alertas'} cerrar={() => setAbierto('')}>
-            <h4>Alertas recientes</h4>
+            <h4>Para resolver ahora</h4>
             {alertas === null ? <div className="vacio">Cargando…</div>
-              : alertas.length ? alertas.map((a) => a.destino
-                ? <button key={a.id} className="alerta-item" onClick={() => { setAbierto(''); navegar(a.destino!); }}>{a.detalle}<small>{a.usuario} · {fechaHora(a.fecha)}<span className="alerta-ver">Ver dónde →</span></small></button>
-                : <div key={a.id} className="alerta-item">{a.detalle}<small>{a.usuario} · {fechaHora(a.fecha)}</small></div>)
-                : <div className="vacio">No hay alertas.</div>}
+              : alertas.length ? alertas.map((a) => (
+                <button key={a.id} className={`alerta-item ${a.gravedad}`} onClick={() => { setAbierto(''); navegar(a.destino); }}>
+                  <b>{a.titulo}</b>{a.detalle}
+                  <small>{a.fecha ? fechaHora(a.fecha) : 'Ahora'}<span className="alerta-ver">Ver dónde →</span></small>
+                </button>))
+                : <div className="vacio">Todo en orden: no hay nada pendiente.</div>}
           </Desplegable>
         </header>
 

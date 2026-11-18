@@ -68,3 +68,9 @@ export interface Protocolo {
 export type Resultados = Record<'humedad' | 'ph' | 'aroma' | 'color' | 'sabor' | 'ufc', boolean | null>;
 
 export interface Pallet { codigo: string; bultos: number; kg: number; gs1?: string }
+
+/** Notificación de la campana. Se calcula en el momento: si el problema se resolvió, ya no aparece. */
+export interface Alerta {
+  id: string; tipo: 'faltantes' | 'stock' | 'rechazo'; gravedad: 'alta' | 'media';
+  titulo: string; detalle: string; destino: string; fecha: string | null;
+}

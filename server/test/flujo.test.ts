@@ -156,8 +156,8 @@ describe('CU-P01 Registrar orden de producción', () => {
     const plan = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' });
     expect(plan.estado, JSON.stringify(plan.cuerpo)).toBe(200);
     expect(plan.cuerpo.estado).toBe('PLANIFICADA');
-    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string }[];
-    expect(alertas.some((a) => /Compras/i.test(a.detalle) && a.detalle.includes(plan.cuerpo.numero))).toBe(true);
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { titulo: string }[];
+    expect(alertas.some((a) => a.titulo.includes(plan.cuerpo.numero))).toBe(true);
     const iniciar = await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/iniciar`);
     expect(iniciar.estado).toBe(409);
     expect(iniciar.cuerpo.error).toMatch(/^Todavía no se puede elaborar: falta en planta/);
@@ -165,27 +165,35 @@ describe('CU-P01 Registrar orden de producción', () => {
     expect((await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/cancelar`, { motivo: 'Prueba' })).estado).toBe(200);
   });
 
-  test('cada alerta lleva a la pantalla donde se ve el problema', async () => {
+  test('las notificaciones muestran lo que pasa ahora: aparecen con el problema y se van cuando se resuelve', async () => {
+    type Alerta = { id: string; tipo: string; titulo: string; detalle: string; destino: string };
+    const alertas = async () => (await api(PROD, 'get', '/alertas')).cuerpo as Alerta[];
     const plan = (await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 90000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' })).cuerpo;
-    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string; destino: string }[];
-    expect(alertas.find((a) => a.detalle.includes(plan.numero))?.destino).toBe(`/ejecucion/${plan.id}`);
+    const deLaOrden = (await alertas()).find((a) => a.id === `faltantes-${plan.id}`)!;
+    expect(deLaOrden.titulo).toContain(plan.numero);
+    expect(deLaOrden.destino).toBe(`/ejecucion/${plan.id}`);
+    // el número de la campana es la cantidad de notificaciones vigentes
+    expect((await api(PROD, 'get', '/pendientes')).cuerpo.alertas).toBe((await alertas()).length);
     // la orden planificada muestra cuánto hay en planta de cada insumo
     const orden = (await api(PROD, 'get', `/ordenes/${plan.id}`)).cuerpo as { items: { cantidad_teorica: number; en_planta: number; critico: boolean }[] };
-    expect(orden.items.every((i) => typeof i.en_planta === 'number')).toBe(true);
     expect(orden.items.some((i) => i.critico && i.en_planta < i.cantidad_teorica)).toBe(true);
+    // la reserva de una orden enorme deja stock bajo: también se avisa, y lleva a "Para resolver"
+    expect((await alertas()).find((a) => a.tipo === 'stock')?.destino).toBe('/panel#para-resolver');
+    // al cancelar la orden, su notificación desaparece
     await api(PROD, 'post', `/ordenes/${plan.id}/cancelar`, { motivo: 'Prueba' });
-    // aviso de stock bajo de un insumo: va al Panel
-    await api(PROD, 'post', '/panel/avisar-compras', { insumo_id: 1 });
-    const ultima = ((await api(PROD, 'get', '/alertas')).cuerpo as { destino: string }[])[0];
-    expect(ultima.destino).toBe('/panel#para-resolver');
+    expect((await alertas()).some((a) => a.id === `faltantes-${plan.id}`)).toBe(false);
+    // y cuando llega mercadería, el stock bajo también se va
+    await reponerTodo();
+    expect((await alertas()).some((a) => a.tipo === 'stock')).toBe(false);
   });
 
-  test('un borrador con faltantes también avisa a Compras', async () => {
+  test('un borrador con faltantes también aparece en las notificaciones', async () => {
     const borrador = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'BORRADOR' });
     expect(borrador.estado).toBe(200);
     expect(borrador.cuerpo.estado).toBe('CREADA');
-    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string }[];
-    expect(alertas.some((a) => a.detalle.includes(borrador.cuerpo.numero))).toBe(true);
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { titulo: string; destino: string }[];
+    const suya = alertas.find((a) => a.titulo.includes(borrador.cuerpo.numero));
+    expect(suya?.destino).toBe(`/ordenes/${borrador.cuerpo.id}`);
   });
 
   test('un borrador se puede completar y planificar después', async () => {
