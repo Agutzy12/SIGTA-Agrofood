@@ -6,7 +6,7 @@ export type Dictamen = 'APROBAR_LIBERAR' | 'RECHAZAR_BLOQUEAR';
 
 export interface Usuario { id: number; email: string; nombre: string; cargo: string; iniciales: string; rol: Rol }
 export interface Config {
-  planta: string; demo: boolean; motivos_pausa: string[]; roles: Record<Rol, string>;
+  planta: string; motivos_pausa: string[]; roles: Record<Rol, string>;
   ubicaciones: { depositos: string[]; sectores: string[]; sectoresConCamara: string[]; racks: string[]; niveles: string[]; camaras: string[] };
 }
 export interface Pendientes { planificar: number; elaborar: number; calidad: number; deposito: number; alertas: number }
@@ -23,6 +23,8 @@ export interface Partida { id: number; nro_lote: string; proveedor: string | nul
 
 export interface ItemOrden {
   insumo_id: number; cantidad_teorica: number; codigo: string; nombre: string; tipo: 'MP' | 'ME'; unidad: string; critico: boolean; partidas?: Partida[];
+  /** Sólo en órdenes PLANIFICADAS: cuánto hay hoy en planta (partidas liberadas). */
+  en_planta?: number;
 }
 export interface FilaConsumo { insumo_id: number; partida_id: number | null; cantidad: number }
 
@@ -66,3 +68,9 @@ export interface Protocolo {
 export type Resultados = Record<'humedad' | 'ph' | 'aroma' | 'color' | 'sabor' | 'ufc', boolean | null>;
 
 export interface Pallet { codigo: string; bultos: number; kg: number; gs1?: string }
+
+/** Notificación de la campana. Se calcula en el momento: si el problema se resolvió, ya no aparece. */
+export interface Alerta {
+  id: string; tipo: 'faltantes' | 'stock' | 'rechazo'; gravedad: 'alta' | 'media';
+  titulo: string; detalle: string; destino: string; fecha: string | null;
+}

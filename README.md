@@ -72,8 +72,7 @@ En la pantalla de ingreso hay accesos rápidos. Todos tienen la contraseña **`s
 | deposito@sigta.demo · Diego Acosta | Operario de depósito | Recibir producto liberado y despachar |
 | gerencia@sigta.demo · Valeria Ruiz | Gerencia | Sólo consulta |
 
-Durante la demo podés cambiar de usuario desde tu nombre (arriba a la derecha) o con el botón *Cambiar a…* que aparece en cada paso.
-**Datos de ejemplo → Reiniciar la demo** deja todo como al principio. El recorrido completo está en [`docs/GUION_DEMO.md`](docs/GUION_DEMO.md).
+Para cambiar de usuario, cerrá la sesión y elegí otro en los accesos rápidos. `npm run db:seed -w server` vuelve a cargar los datos iniciales.
 
 ## Comandos
 
@@ -84,8 +83,8 @@ Durante la demo podés cambiar de usuario desde tu nombre (arriba a la derecha) 
 | `npm run db:seed -w server` | Vuelve a cargar los datos de ejemplo |
 | `npm run db:studio -w server` | Abre Prisma Studio para mirar las tablas |
 | `npm test` | Pruebas de la API (contra la base `sigta_test`) y control de tipos de las pantallas |
-| `npm run build` y luego `npm start` | Versión de producción: un solo servidor en http://localhost:3000 |
-| `npm run test:e2e` | Recorre la demo completa en el navegador (necesita `npm run build` antes) |
+| `npm run build` y luego `npm start` | Versión de producción de la API en http://localhost:3000 (las pantallas: `npm run preview -w client`) |
+| `npm run test:e2e` | Recorre el sistema en el navegador (necesita `npm run build`, la API corriendo y los datos recién cargados) |
 
 ## Reglas que el sistema hace cumplir
 

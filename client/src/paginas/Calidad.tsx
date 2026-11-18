@@ -1,4 +1,5 @@
 /** Paso 3 · Controlar calidad: determinaciones, contraste con la especificación y dictamen firmado (CU-P03). */
+import { IconoProducto } from '../componentes/IconoLinea';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -65,7 +66,7 @@ export function Calidad() {
             {pendientes.length ? pendientes.map((l) => (
               <button key={l.id} className={`lote-item ${lote?.id === l.id ? 'sel' : ''}`} style={{ display: 'block', width: '100%', textAlign: 'left' }}
                 onClick={() => navegar(`/calidad/${l.id}`, { replace: true })}>
-                <span className="cod">{l.codigo}</span><b>{l.producto_nombre}</b>
+                <IconoProducto de={l.producto_nombre} /><span className="cod">{l.codigo}</span><b>{l.producto_nombre}</b>
                 <small>{kg(l.cantidad_kg)} · {l.creado_en.slice(0, 10) === hoyTexto() ? 'Hoy' : fecha(l.creado_en).slice(0, 5)}, {hora(l.creado_en)}</small>
                 <small className="est">{l.borrador ? 'Análisis en curso' : 'Análisis pendiente'}</small>
               </button>
@@ -79,7 +80,7 @@ export function Calidad() {
         <section className="tarjeta" style={{ marginTop: 6 }}><h2>Últimos dictámenes</h2>
           <table className="tabla" style={{ marginTop: 14 }}><thead><tr><th>Protocolo</th><th>Producto</th><th>Dictamen</th><th></th></tr></thead>
             <tbody>{historial.slice(0, 5).map((h) => (
-              <tr key={h.id}><td><b>{h.protocolo}</b><span className="peq">{h.lote_codigo}</span></td><td>{h.producto_nombre}<span className="peq">{h.analista} · {fechaHora(h.fecha)}</span></td>
+              <tr key={h.id}><td><b>{h.protocolo}</b><span className="peq">{h.lote_codigo}</span></td><td className="prod-celda"><IconoProducto de={h.producto_nombre} />{h.producto_nombre}<span className="peq">{h.analista} · {fechaHora(h.fecha)}</span></td>
                 <td>{h.dictamen === 'APROBAR_LIBERAR' ? <Pill color="verde">Aprobado</Pill> : <Pill color="rojo">Rechazado</Pill>}</td>
                 <td><button className="enlace" onClick={() => verProtocolo(h.lote_id)}>Ver →</button></td></tr>
             ))}</tbody></table>
@@ -147,7 +148,7 @@ function FormularioLote({ lote, alGuardar }: { lote: LoteCalidad; alGuardar: () 
   return (
     <>
       <section className="tarjeta">
-        <div className="tarjeta-cab"><div><h2>{lote.producto_nombre}</h2><p className="sub">Protocolo <Termino t="rbpm">R.BPM.01V01</Termino> · Pendiente de firma</p></div><Pill color="ambar">Cuarentena</Pill></div>
+        <div className="tarjeta-cab"><div className="con-prod"><IconoProducto de={lote.producto_nombre} grande /><div><h2>{lote.producto_nombre}</h2><p className="sub">Protocolo <Termino t="rbpm">R.BPM.01V01</Termino> · Pendiente de firma</p></div></div><Pill color="ambar">Cuarentena</Pill></div>
         <div className="rejilla col-3"><Dato titulo="Lote">{lote.codigo}</Dato><Dato titulo="Orden">{lote.op_numero}</Dato><Dato titulo="Cantidad · Vencimiento">{kg(lote.cantidad_kg)} · {fecha(lote.vencimiento)}</Dato></div>
       </section>
 
@@ -157,7 +158,7 @@ function FormularioLote({ lote, alGuardar }: { lote: LoteCalidad; alGuardar: () 
             <Pill color={fuera ? 'rojo' : conformes === 6 ? 'verde' : 'gris'}>{conformes}/6 conformes</Pill>
             <button className="btn chico" disabled={!habilitado} title="Vuelve a poner los valores ideales de la especificación" onClick={cargarOptimos}>Valores óptimos</button>
           </div></div>
-        <table className="tabla">
+        <table className="tabla con-campos">
           <thead><tr><th>Determinación</th><th style={{ width: 240 }}>Resultado</th><th>Debe ser</th><th></th></tr></thead>
           <tbody>
             <tr><td><b>Humedad</b></td><td><ConUnidad unidad="%"><input className="entrada" id="humedad" inputMode="decimal" disabled={!habilitado} value={v.humedad} onChange={cambiar('humedad')} /></ConUnidad></td><td>≤ {num(e.humedad_max, 1)} %</td><td><Contraste ok={r.humedad} /></td></tr>
@@ -173,7 +174,7 @@ function FormularioLote({ lote, alGuardar }: { lote: LoteCalidad; alGuardar: () 
       <section className="tarjeta"><h2><Termino t="dictamen">Dictamen</Termino></h2>
         <div className="opciones-dictamen">
           {([['APROBAR_LIBERAR', 'Aprobar y liberar', 'Depósito puede recibir el lote.'], ['RECHAZAR_BLOQUEAR', 'Rechazar y bloquear', 'La orden pasa a Rechazada (Scrap).']] as const).map(([valor, t, d]) => (
-            <label key={valor} className={`opcion-dictamen ${dictamen === valor ? 'sel' : ''}`}>
+            <label key={valor} className={`opcion-dictamen ${valor === 'RECHAZAR_BLOQUEAR' ? 'rechazo' : ''} ${dictamen === valor ? 'sel' : ''}`}>
               <b><input type="radio" name="dictamen" value={valor} disabled={!habilitado} checked={dictamen === valor} onChange={() => setDictamen(valor)} /> {t}</b><span>{d}</span>
             </label>
           ))}

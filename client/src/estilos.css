@@ -25,72 +25,91 @@
 }
 
 @layer base {
-/* Tipografía Source Sans 3 (licencia SIL OFL) incluida en el proyecto: la demo funciona sin internet. */
+/* Tipografía Source Sans 3 (licencia SIL OFL) incluida en el proyecto: las pantallas funcionan sin depender de Google Fonts. */
 @font-face { font-family: 'Source Sans 3'; font-weight: 400; font-style: normal; font-display: swap; src: url('/fonts/SourceSans3-Regular.woff') format('woff'); }
 @font-face { font-family: 'Source Sans 3'; font-weight: 600; font-style: normal; font-display: swap; src: url('/fonts/SourceSans3-SemiBold.woff') format('woff'); }
 @font-face { font-family: 'Source Sans 3'; font-weight: 700; font-style: normal; font-display: swap; src: url('/fonts/SourceSans3-Bold.woff') format('woff'); }
 
-/* SIGTA demo · estilos compartidos por las 6 pantallas.
-   Los colores están como variables (:root) para cambiarlos en un solo lugar. */
+/* SIGTA · estilos compartidos por todas las pantallas.
+   Los colores están como variables (:root) para cambiarlos en un solo lugar.
+
+   PALETA (teoría del color)
+   Base de marca: lima #A6CB72 (más clara y menos saturada que la #96C63A original) · verde #4F934E · naranja #F39B00 · gris cálido #DCDAD7 · azul acero #57738C
+   - Verde y lima son vecinos en el círculo cromático (análogos): dan la identidad "de campo".
+   - El naranja es el acento cálido: se usa poco (acción principal y "en curso") para que llame la atención.
+   - El azul acero es el complementario del naranja: lo equilibra y marca lo que espera o informa (cuarentena).
+   - Los grises salen del #DCDAD7 (gris cálido): fondos, líneas y textos comparten su temperatura.
+   - Regla 60-30-10: 60 % neutros, 30 % verdes, 10 % naranja.
+   Colores agregados (derivados de los cinco):
+   - Rojo ladrillo #B4472F para rechazos y bloqueos: es vecino del naranja (cálido) y tiene la misma fuerza que el verde,
+     así no desentona y se distingue del naranja por ser más oscuro.
+   - Versiones oscuras de cada color para texto (contraste AA sobre blanco) y versiones "suaves" para fondos.
+   - Gris carbón #33373A para avisos flotantes y textos. */
 :root {
-  /* Marca (de la web de Agrifood): verde, verde lima y naranja */
-  --marca-verde: #009448;
-  --marca-lima: #7fc821;
-  --ambar: #ffa300;
-  --ambar-oscuro: #8a5300;
-  --ambar-suave: #fff3da;
-  --ambar-borde: #f6d28a;
-  --ambar-hover: #f29a00;
-  --sobre-ambar: #2b2b00;
+  --marca-logo: #1FA34A;   /* el verde del logo de SIGTA: identidad (nombre, foco, selección, línea de la barra) */
+  --marca-verde: #4F934E;
+  --marca-lima: #A6CB72;
+  --acero: #57738C;
+  --ambar: #F39B00;
+  --ambar-oscuro: #8A5600;
+  --ambar-suave: #FDF1DA;
+  --ambar-borde: #F3CF8A;
+  --ambar-hover: #DD8D00;
+  --sobre-ambar: #2A2100;
+  --lima-suave: #F0F5E6;
 
-  --fondo: #f5f5f2;
+  --fondo: #ECEBE8;
   --superficie: #ffffff;
-  --superficie-2: #fafaf8;
-  --linea: #e6e6e0;
-  --texto: #363a36;
-  --texto-2: #55605a;
-  --texto-suave: #6b706b;
-  --gris-suave: #efefea;
-  --barra: #e4e4dd;
-  --toast: #2f332f;
+  --superficie-2: #F6F5F3;
+  --linea: #DCDAD7;
+  --texto: #2E3336;
+  --texto-2: #4E565B;
+  --texto-suave: #686F74;
+  --gris-suave: #ECEBE8;
+  --barra: #DCDAD7;
+  --toast: #33373A;
 
-  --verde: #1f7a3a;
-  --verde-suave: #e3f1e6;
-  --azul: #2e5d87;
-  --azul-suave: #e4edf5;
-  --rojo: #b3342a;
-  --rojo-suave: #fbe9e7;
+  --verde: #3D7A3C;
+  --verde-suave: #E6F0E4;
+  --azul: #46627A;
+  --azul-suave: #E5EBF0;
+  --rojo: #B4472F;
+  --rojo-suave: #F7E6E1;
 
-  --sombra: 0 1px 2px rgba(40, 40, 30, .05);
-  --sombra-flotante: 0 8px 28px rgba(40, 40, 30, .14);
+  --grabado: color-mix(in srgb, var(--texto) 22%, transparent);  /* tinta de las ilustraciones */
+  --sombra: 0 1px 2px rgba(46, 51, 54, .06);
+  --sombra-flotante: 0 8px 28px rgba(46, 51, 54, .16);
   --radio: 10px;
   color-scheme: light;
 }
 
-/* Modo oscuro: sólo se redefinen los colores; el resto del diseño es el mismo */
+/* Modo oscuro: sólo se redefinen los colores; el resto del diseño es el mismo.
+   Los fondos son el gris carbón (no negro puro) y los colores se aclaran y bajan de saturación para no vibrar. */
 :root[data-tema="oscuro"] {
-  --ambar-oscuro: #ffc766;
-  --ambar-suave: rgba(255, 163, 0, .14);
-  --ambar-borde: rgba(255, 163, 0, .45);
+  --ambar-oscuro: #F6B645;
+  --ambar-suave: rgba(243, 155, 0, .15);
+  --ambar-borde: rgba(243, 155, 0, .45);
+  --lima-suave: rgba(166, 203, 114, .14);
 
-  --fondo: #0d0d0e;
-  --superficie: #161617;
-  --superficie-2: #1c1c1e;
-  --linea: #2a2a2d;
-  --texto: #ececee;
-  --texto-2: #b9b9bf;
-  --texto-suave: #9a9aa2;
-  --gris-suave: #232326;
-  --barra: #34343a;
-  --toast: #2a2a2d;
+  --fondo: #17191B;
+  --superficie: #202427;
+  --superficie-2: #262B2E;
+  --linea: #343A3E;
+  --texto: #ECEAE7;
+  --texto-2: #B9BEC1;
+  --texto-suave: #969DA1;
+  --gris-suave: #2A2F33;
+  --barra: #3B4246;
+  --toast: #2F3438;
 
-  --verde: #6fd08a;
-  --verde-suave: rgba(70, 175, 100, .17);
-  --azul: #8fbbe6;
-  --azul-suave: rgba(90, 140, 200, .19);
-  --rojo: #ff958a;
-  --rojo-suave: rgba(230, 90, 80, .17);
+  --verde: #86C785;
+  --verde-suave: rgba(79, 147, 78, .22);
+  --azul: #9DB7CE;
+  --azul-suave: rgba(87, 115, 140, .28);
+  --rojo: #E88C76;
+  --rojo-suave: rgba(180, 71, 47, .24);
 
+  --grabado: color-mix(in srgb, var(--texto) 20%, transparent);
   --sombra: 0 1px 2px rgba(0, 0, 0, .35);
   --sombra-flotante: 0 8px 28px rgba(0, 0, 0, .55);
   color-scheme: dark;
@@ -137,7 +156,7 @@ svg.ico { display: inline-block; vertical-align: -0.2em; width: 20px; height: 20
 .topbar .planta { display: flex; align-items: center; gap: 10px; }
 .topbar .fecha { color: var(--texto-suave); }
 .topbar .derecha { margin-left: auto; display: flex; align-items: center; gap: 16px; }
-.chip-demo { background: var(--gris-suave); border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; color: var(--texto-suave); }
+.chip-boton { background: var(--gris-suave); border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; color: var(--texto-suave); }
 .punto { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: middle; }
 .campana { position: relative; background: none; border: 0; padding: 4px; }
 .campana .n { position: absolute; top: -2px; right: -4px; background: var(--rojo); color: #fff; font-size: 10px; border-radius: 99px; padding: 1px 5px; }
@@ -240,7 +259,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
 .entrada, select.entrada, textarea.entrada {
   width: 100%; border: 1px solid var(--linea); border-radius: 9px; padding: 12px 14px; background: var(--superficie); font: inherit; color: var(--texto); outline: 0;
 }
-.entrada:focus { border-color: var(--ambar); box-shadow: 0 0 0 3px rgba(255, 163, 0, .18); }
+.entrada:focus { border-color: var(--ambar); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ambar) 22%, transparent); }
 .entrada[readonly], .entrada:disabled { background: var(--fondo); color: var(--texto-2); }
 .entrada.error { border-color: var(--rojo); background: var(--rojo-suave); }
 .con-unidad { position: relative; }
@@ -405,7 +424,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
 @media (max-width: 700px) {
   .topbar .planta, .topbar .campana { display: none; }
   .topbar .derecha { gap: 10px; }
-  .chip-demo { padding: 5px 9px; font-size: 12px; }
+  .chip-boton { padding: 5px 9px; font-size: 12px; }
   .cabecera h1 { font-size: 28px; }
   .kpis, .kpis.kpis-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
   .tarjeta.atencion { grid-template-columns: 1fr; gap: 12px; }
@@ -527,7 +546,9 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .termino:hover .explica, .termino:focus .explica { visibility: visible; opacity: 1; }
 
   /* ---------- Tarea sugerida para el rol ---------- */
-  .tarea { display: flex; align-items: center; gap: 18px; background: linear-gradient(90deg, var(--verde-suave), var(--superficie) 70%); border: 1px solid var(--linea); border-radius: 12px; padding: 18px 22px; margin-bottom: 22px; }
+  .tarea { display: flex; align-items: center; gap: 18px; background: var(--superficie); border: 1px solid var(--linea); border-left: 4px solid var(--marca-verde); border-radius: 12px; padding: 18px 22px; margin-bottom: 22px; position: relative; overflow: hidden; isolation: isolate; }
+  .tarea::after { content: ''; position: absolute; top: 0; bottom: 0; right: 150px; width: 420px; z-index: -1; pointer-events: none; background: linear-gradient(90deg, transparent, var(--marca-verde) 50%); opacity: .3;
+    -webkit-mask: url('/img/grabados/granja.svg') 50% 70% / auto 230% no-repeat; mask: url('/img/grabados/granja.svg') 50% 70% / auto 230% no-repeat; }
   .tarea .icono { width: 44px; height: 44px; border-radius: 12px; background: var(--marca-verde); color: #fff; display: grid; place-items: center; flex: none; }
   .tarea .texto { flex: 1; min-width: 0; }
   .tarea .texto small { display: block; color: var(--texto-suave); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
@@ -545,21 +566,33 @@ table.tabla { width: 100%; border-collapse: collapse; }
 
   /* ---------- Pantalla de ingreso ---------- */
   .ingreso { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--fondo); }
-  .ingreso .presentacion { --pres-texto: var(--texto); --pres-2: var(--texto-2); --pres-3: var(--texto-suave); background: radial-gradient(120% 90% at 20% 0%, #dcefe1 0%, var(--superficie) 62%); border-right: 1px solid var(--linea); color: var(--pres-texto); padding: 56px 64px; display: flex; flex-direction: column; gap: 22px; }
+  .ingreso .presentacion { --pres-texto: var(--texto); --pres-2: var(--texto-2); --pres-3: var(--texto-suave); background: var(--superficie); border-right: 1px solid var(--linea); color: var(--pres-texto); padding: 56px 64px; display: flex; flex-direction: column; gap: 22px; position: relative; isolation: isolate; overflow: hidden; }
+  /* El panel de presentación es una lámina: fondo gris carbón y la granja dibujada en líneas claras, de arriba a abajo
+     (ilustración propia, scripts/grabados.py → ingreso.svg). Queda fija a la altura de la ventana. */
+  .ingreso .presentacion { --pres-texto: #F4F2EE; --pres-2: #D9D6D0; --pres-3: #B4B9BC; --lamina: #2B2F32;
+    background: var(--lamina); border-right: 0; min-height: 100vh; position: sticky; top: 0; align-self: start; padding: 44px 64px 28px; gap: 18px; }
+  :root[data-tema="oscuro"] .ingreso .presentacion { --lamina: #111315; background: var(--lamina); }
+  .ingreso .presentacion::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--marca-lima) 35%, #F4F2EE), #F4F2EE 60%); opacity: .62;
+    -webkit-mask: url('/img/grabados/ingreso.svg') center bottom / cover no-repeat; mask: url('/img/grabados/ingreso.svg') center bottom / cover no-repeat; }
+  /* velo detrás del texto para que se lea bien sobre las nubes */
+  .ingreso .presentacion::after { content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 520px; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, var(--lamina) 86%, transparent);
+    -webkit-mask: linear-gradient(90deg, #000 62%, transparent 86%); mask: linear-gradient(90deg, #000 62%, transparent 86%); }
+  .ingreso .cliente { margin-top: auto; align-self: flex-start; background: color-mix(in srgb, var(--lamina) 86%, transparent); padding: 8px 14px 8px 8px; border-radius: 12px; }
   .ingreso .presentacion .marca-grande { display: flex; align-items: center; gap: 14px; }
   .ingreso .presentacion .marca-grande .logotipo-sigta { display: block; width: auto; max-width: 100%; }
   .ingreso .presentacion .marca-grande b { font-size: 44px; letter-spacing: 3px; line-height: 1; }
   .ingreso .presentacion h1 { font-size: 30px; font-weight: 600; line-height: 1.2; max-width: 520px; margin-top: 18px; }
   .ingreso .presentacion p { font-size: 17px; line-height: 1.5; color: var(--pres-2); max-width: 500px; }
-  .ingreso .pasos-intro { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 14px; max-width: 480px; }
+  .ingreso .pasos-intro { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; max-width: 520px; }
   .ingreso .pasos-intro li { display: flex; align-items: center; gap: 14px; }
-  .ingreso .pasos-intro i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; background: rgba(31, 163, 74, .14); border: 1.5px solid #1fa34a; color: var(--pres-texto); display: grid; place-items: center; font-size: 14px; font-weight: 700; flex: none; }
+  .ingreso .pasos-intro i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; background: var(--marca-lima); border: 0; color: #22272A; display: grid; place-items: center; font-size: 14px; font-weight: 700; flex: none; }
   .ingreso .pasos-intro b { display: block; font-size: 16px; }
-  .ingreso .pasos-intro em { font-style: normal; font-weight: 400; color: var(--pres-3); font-size: 14px; }
+  .ingreso .pasos-intro em { font-style: normal; font-weight: 400; color: var(--pres-3); font-size: 13.5px; display: block; }
   .ingreso .pasos-intro li { align-items: flex-start; }
   .ingreso .pasos-intro span { font-size: 13.5px; color: var(--pres-2); }
-  .ingreso .cliente { margin-top: auto; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--pres-2); }
-  :root[data-tema="oscuro"] .ingreso .presentacion { background: radial-gradient(120% 90% at 20% 0%, #0f1d14 0%, #0b0b0d 60%); border-right-color: transparent; }
+  .ingreso .cliente { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--pres-2); }
   .ingreso .cliente img { background: #fff; border-radius: 10px; padding: 6px 10px; box-sizing: content-box; }
   .ingreso .formulario { padding: 56px 64px; display: flex; flex-direction: column; justify-content: center; gap: 26px; max-width: 560px; width: 100%; margin: 0 auto; }
   .ingreso .formulario h2 { font-size: 28px; font-weight: 600; }
@@ -584,9 +617,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .acceso-texto b { display: block; font-size: 15.5px; }
   .acceso-texto small { display: block; color: var(--texto-suave); font-size: 13px; margin-top: 1px; }
   .acceso-ir { color: var(--texto-suave); font-size: 13px; white-space: nowrap; }
-  .ingreso-manual summary { cursor: pointer; color: var(--texto); font-weight: 600; font-size: 18px; list-style: none; }
-  .ingreso-manual summary::-webkit-details-marker { display: none; }
-  .ingreso-manual[open] summary { color: var(--texto); font-size: 18px; }
+  .ingreso .formulario .ingreso-manual-titulo { color: var(--texto); font-weight: 600; font-size: 18px; margin: 0; }
 
   /* ---------- Cómo funciona ---------- */
   .flujo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -608,6 +639,7 @@ table.tabla { width: 100%; border-collapse: collapse; }
   @media (max-width: 1100px) {
     .ingreso { grid-template-columns: 1fr; }
     .ingreso .presentacion, .ingreso .formulario { padding: 32px 20px; }
+    .ingreso .presentacion { min-height: 560px; position: relative; padding-bottom: 20px; }
     .flujo { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 700px) {
@@ -710,28 +742,29 @@ table.tabla { width: 100%; border-collapse: collapse; }
 
 
   .marca a.sigta-titulo { color: inherit; border-radius: 10px; }
-  .marca a.sigta-titulo:hover b { color: #1fa34a; }
+  .marca a.sigta-titulo:hover b { color: var(--marca-verde); }
   .guia-item { display: block; margin-top: 4px; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--texto); font-weight: 600; }
   .pasos-v li.hecho.activo .num { background: var(--marca-verde); color: #fff; box-shadow: 0 0 0 4px var(--verde-suave); }
 
   /* ---------- Encabezado de cada pantalla: banda con ícono, ruta y título ---------- */
-  .banner { --tono: var(--ambar); --tono-suave: var(--ambar-suave);
-    position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px;
-    max-width: 1720px; margin: 0 auto 22px; padding: 20px 24px; border: 1px solid var(--linea); border-radius: 16px;
-    background:
-      radial-gradient(120% 140% at 0% 0%, var(--tono-suave) 0%, transparent 55%),
-      linear-gradient(90deg, transparent 60%, color-mix(in srgb, var(--tono) 6%, transparent)),
-      var(--superficie); }
-  .banner::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
-    background-image: radial-gradient(color-mix(in srgb, var(--tono) 35%, transparent) 1px, transparent 1.2px);
-    background-size: 18px 18px; mask-image: linear-gradient(90deg, transparent 55%, #000); }
-  .banner::after { content: ''; position: absolute; left: 0; top: 18px; bottom: 18px; width: 4px; border-radius: 0 4px 4px 0; background: var(--tono); }
-  .banner.calidad { --tono: var(--azul); --tono-suave: var(--azul-suave); }
-  .banner.deposito { --tono: var(--verde); --tono-suave: var(--verde-suave); }
-  .banner.consulta { --tono: var(--marca-verde); --tono-suave: var(--verde-suave); }
-  .banner-icono { position: relative; z-index: 1; width: 56px; height: 56px; border-radius: 14px; flex: none; display: grid; place-items: center;
-    background: var(--tono-suave); color: var(--tono); border: 1px solid color-mix(in srgb, var(--tono) 35%, transparent); }
-  .banner-icono svg { display: block; }
+  /* Encabezado de cada pantalla: un bloque del color del área con su ilustración en líneas (scripts/grabados.py).
+     Inicio: verde · Producción: naranja · Calidad: azul acero · Depósito: lima · Consultas: gris carbón. */
+  .banner { --tono: #3D7A3C; --tono-tinta: #ffffff; --tono-tinta-2: rgba(255, 255, 255, .86); --dibujo: url('/img/grabados/cosecha.svg');
+    position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; min-height: 132px; isolation: isolate;
+    max-width: 1720px; margin: 0 auto 22px; padding: 24px 28px; border-radius: 16px; background: var(--tono); color: var(--tono-tinta); }
+  .banner::before { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: min(64%, 900px); z-index: -1; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--tono-tinta) 30%); opacity: .5;
+    -webkit-mask: var(--dibujo) right 64% / auto 200% no-repeat; mask: var(--dibujo) right 64% / auto 200% no-repeat; }
+  .banner.produccion { --tono: #F39B00; --tono-tinta: #2A2100; --tono-tinta-2: rgba(42, 33, 0, .82); --dibujo: url('/img/grabados/planta.svg'); }
+  .banner.calidad { --tono: #57738C; --dibujo: url('/img/grabados/campo.svg'); }
+  .banner.deposito { --tono: var(--marca-lima); --tono-tinta: #1F2A0C; --tono-tinta-2: rgba(31, 42, 12, .82); --dibujo: url('/img/grabados/deposito.svg'); }
+  .banner.consulta { --tono: #33373A; --dibujo: url('/img/grabados/granja.svg'); }
+  .banner .miga { color: var(--tono-tinta-2) !important; }
+  .banner .cabecera h1 { color: var(--tono-tinta); }
+  .banner .cabecera p { color: var(--tono-tinta-2); }
+  .banner .btn { border-color: transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); color: var(--texto); }
+  .banner.produccion .btn.primario { background: #2B2F32; border-color: #2B2F32; color: #fff; }
+  .banner .pill { background: rgba(255, 255, 255, .92); color: #2E3336; }
   .contenido-cabecera { position: relative; z-index: 1; flex: 1; min-width: 0; }
   .banner:has(.contenido-cabecera:empty) { display: none; }
   .banner .miga { margin-bottom: 4px; text-transform: uppercase; letter-spacing: .7px; font-size: 11.5px; font-weight: 600; color: var(--tono); }
@@ -740,10 +773,9 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .banner .cabecera p { margin-top: 2px; font-size: 15px; }
 
   /* Títulos de cada sección: con una marca de color para que se distingan a simple vista */
-  .tarjeta > h2::before, .tarjeta-cab h2::before, .titulo-seccion::before { content: ''; display: inline-block; width: 4px; height: .9em; border-radius: 3px; background: var(--ambar); margin-right: 10px; vertical-align: -.08em; }
+  .tarjeta > h2::before, .tarjeta-cab h2::before, .titulo-seccion::before { content: ''; display: inline-block; width: 4px; height: .9em; border-radius: 3px; background: var(--marca-verde); margin-right: 10px; vertical-align: -.08em; }
   @media (max-width: 700px) {
     .banner { padding: 16px; gap: 12px; align-items: flex-start; }
-    .banner-icono { width: 44px; height: 44px; border-radius: 12px; }
     .banner .cabecera { flex-direction: column; align-items: flex-start; gap: 10px; }
     .banner .cabecera h1 { font-size: 24px; }
   }
@@ -751,3 +783,300 @@ table.tabla { width: 100%; border-collapse: collapse; }
   .ingreso { position: relative; }
   .ingreso-tema { position: absolute; top: 18px; right: 18px; z-index: 5; background: var(--superficie); }
 }
+
+/* ---------- Íconos de las líneas de producto (los de Agrifood); el color lo pone el tema ---------- */
+.ico-linea { display: inline-block; width: 1em; height: 1em; flex: none; background: var(--ambar);
+  -webkit-mask: var(--forma) center / contain no-repeat; mask: var(--forma) center / contain no-repeat; }
+.pestanas button .ico-linea { font-size: 20px; vertical-align: -4px; margin-right: 7px; background: currentColor; }
+.tarjeta-cab .con-linea { display: flex; align-items: center; gap: 14px; }
+.tarjeta-cab .con-linea .ico-linea { font-size: 42px; }
+
+/* ---------- Ilustraciones repartidas por la página (todas propias: scripts/grabados.py) ---------- */
+/* Pie de cada pantalla: la granja vista de lejos, de lado a lado */
+.principal::after { content: ''; flex: none; height: 110px; margin-top: 8px; pointer-events: none; background: color-mix(in srgb, var(--marca-verde) 40%, var(--texto)); opacity: .34;
+  -webkit-mask: url('/img/grabados/horizonte.svg') left bottom / auto 100% repeat-x; mask: url('/img/grabados/horizonte.svg') left bottom / auto 100% repeat-x; }
+/* Menú lateral */
+.sidebar .espacio { position: relative; min-height: 96px; }
+.sidebar .espacio::after { content: ''; position: absolute; left: -16px; right: -16px; bottom: 0; height: 96px; pointer-events: none; background: color-mix(in srgb, var(--marca-verde) 40%, var(--texto)); opacity: .4;
+  -webkit-mask: url('/img/grabados/cosecha.svg') 38% bottom / auto 100% no-repeat; mask: url('/img/grabados/cosecha.svg') 38% bottom / auto 100% no-repeat; }
+/* Guía del circuito (columna derecha) */
+.guia::after { content: ''; display: block; height: 84px; border-top: 1px solid var(--linea); background: color-mix(in srgb, var(--marca-verde) 40%, var(--texto)); opacity: .38;
+  -webkit-mask: url('/img/grabados/planta.svg') 34% 60% / auto 190% no-repeat; mask: url('/img/grabados/planta.svg') 34% 60% / auto 190% no-repeat; }
+/* Cuando no hay nada para mostrar */
+.vacio-grande::before { content: ''; display: block; height: 120px; margin: 0 auto 14px; max-width: 480px; background: color-mix(in srgb, var(--marca-verde) 40%, var(--texto)); opacity: .45;
+  -webkit-mask: url('/img/grabados/campo.svg') center / contain no-repeat; mask: url('/img/grabados/campo.svg') center / contain no-repeat; }
+@media print { .principal::after, .guia::after, .banner::before { display: none; } }
+
+/* =====================================================================================
+   PALETA APLICADA A LAS SUPERFICIES
+   60 % neutros (fondo gris cálido y tarjetas blancas) · 30 % verdes y carbón (menú, títulos, enlaces, tablas)
+   · 10 % naranja (sólo la acción principal, los contadores y lo que está "en curso").
+   ===================================================================================== */
+/* Menú lateral: gris carbón, igual que la lámina del ingreso. Adentro se redefinen los colores para texto claro. */
+.sidebar { --lamina: #2B2F32; --superficie: #2B2F32; --fondo: #33373A; --linea: #454B4F; --gris-suave: #3A4044;
+  --texto: #F1EFEC; --texto-2: #D0CCC6; --texto-suave: #A7ADB1; background: var(--lamina); border-right: 0; color: var(--texto); }
+:root[data-tema="oscuro"] .sidebar { --lamina: #111315; --superficie: #111315; --gris-suave: #23282B; --linea: #2E3438; border-right: 1px solid #262B2E; }
+.sidebar .menu a.activo { background: var(--marca-lima); color: #1F2A0C; }
+.sidebar .menu a.activo .quien { color: #3C4E17; }
+.sidebar .menu a .paso-n { background: transparent; border: 1.5px solid var(--marca-lima); color: var(--marca-lima); }
+.sidebar .menu a.activo .paso-n { background: #1F2A0C; border-color: #1F2A0C; color: var(--marca-lima); }
+.sidebar .menu a .cuenta { background: var(--ambar); color: #2A2100; }
+.sidebar .menu a.activo .cuenta { background: #1F2A0C; color: #fff; }
+.sidebar .menu-titulo { color: var(--marca-lima); }
+.sidebar .marca .para img { background: #fff; border-radius: 8px; padding: 4px 8px; box-sizing: content-box; height: 28px !important; }
+.sidebar .espacio::after { background: #F1EFEC; opacity: .3; }
+.marca a.sigta-titulo:hover b { color: var(--marca-lima); }
+
+/* Barra de arriba: una línea lima la separa del contenido */
+.topbar { border-bottom: 3px solid var(--marca-lima); }
+
+/* Tablas: encabezado en el gris de la paleta */
+.tabla th { background: #DCDAD7; color: #3A4044; }
+:root[data-tema="oscuro"] .tabla th { background: #343A3E; color: var(--texto-2); }
+.tabla.clic tbody tr:hover, .tabla tbody tr:hover { background: var(--lima-suave); }
+
+/* Verde para lo que se navega y se elige; el naranja queda para la acción principal */
+.enlace { color: var(--verde); }
+.pestanas button.activa, .paginas button.activa { background: var(--verde-suave); color: var(--verde); }
+.lote-item.sel { background: var(--lima-suave); border-color: var(--marca-lima); }
+.lote-item.sel small.est { color: var(--verde); }
+.entrada:focus { border-color: var(--marca-verde); box-shadow: 0 0 0 3px color-mix(in srgb, var(--marca-verde) 22%, transparent); }
+
+/* Indicadores: cada uno con su color arriba (acero: información · naranja: lo de hoy · verde: calidad) */
+.kpi { border-top: 4px solid var(--acero); }
+.kpi.destacado { border-top-color: var(--ambar); }
+.kpi:last-child { border-top-color: var(--marca-verde); }
+.tarea .icono { background: var(--marca-verde); }
+
+/* ---------- Íconos de las líneas de producto junto a cada producto ---------- */
+.ico-prod { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--lima-suave); border: 1px solid color-mix(in srgb, var(--marca-lima) 55%, transparent); flex: none; }
+.ico-prod .ico-linea { font-size: 26px; background: var(--verde); }
+.ico-prod.grande { width: 56px; height: 56px; border-radius: 14px; } .ico-prod.grande .ico-linea { font-size: 38px; }
+.tabla td.prod-celda:has(.ico-prod) { position: relative; padding-left: 62px; }
+.tabla td.prod-celda .ico-prod { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+.con-prod { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.lote-item .ico-prod { float: right; margin-left: 10px; }
+
+/* Tira de líneas de producto del Panel */
+.lineas-tira { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.lineas-tira a { display: flex; align-items: center; gap: 10px; padding: 14px 12px; border-radius: 12px; background: #2B2F32; color: #F1EFEC; min-width: 0; }
+.lineas-tira a .ico-linea { font-size: 36px; background: var(--ambar); }
+.lineas-tira a b { display: block; font-size: 15px; } .lineas-tira a small { display: block; font-size: 12px; color: #B9BEC1; }
+.lineas-tira a.con-ordenes { background: var(--marca-verde); } .lineas-tira a.con-ordenes .ico-linea { background: #fff; } .lineas-tira a.con-ordenes small { color: rgba(255, 255, 255, .88); }
+.lineas-tira a:hover { filter: brightness(1.08); }
+@media (max-width: 1100px) { .lineas-tira { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* =====================================================================================
+   PULIDO PANTALLA POR PANTALLA
+   ===================================================================================== */
+/* Menú lateral: más compacto para que entre completo sin desplazar en pantallas de 900 px de alto */
+.sidebar { padding-top: 18px; }
+.sidebar .menu { margin-top: 14px !important; }
+.sidebar .menu a, .sidebar .menu button.item { padding: 8px 10px; margin-bottom: 2px; }
+.sidebar .menu-titulo { margin: 16px 0 6px; }
+.sidebar .menu button.item.apagado { padding: 6px 10px; font-size: 13.5px; }
+.sidebar .menu button.item.apagado svg.ico { width: 17px; height: 17px; }
+.sidebar .marca .para { margin-top: 10px; padding-top: 10px; }
+.sidebar .espacio { min-height: 30px; } .sidebar .espacio::after { height: 60px; }
+.sidebar .ayuda { padding: 12px 8px 4px; }
+
+/* Encabezado de tarjeta con ícono de producto: el texto ocupa el espacio y los botones quedan a la derecha */
+.tarjeta-cab > .con-prod { flex: 1; }
+.tarjeta-cab > .btn, .tarjeta-cab > .pill, .tarjeta-cab > a.btn { flex: none; }
+.con-prod > div { min-width: 0; }
+.codigo { color: var(--verde); }
+
+/* Lo plegable y lo seleccionado van en verde; el naranja queda para acciones y avisos */
+.plegable summary { color: var(--verde); }
+.etapa .tt { color: var(--verde); }
+.etapa.sel { background: var(--lima-suave); border-color: var(--marca-lima); }
+.fraccion { color: var(--verde); }
+.opcion-dictamen.sel { background: var(--verde-suave); border-color: var(--marca-verde); }
+.opcion-dictamen input { accent-color: var(--marca-verde); }
+.opcion-dictamen.rechazo.sel { background: var(--rojo-suave); border-color: var(--rojo); }
+.opcion-dictamen.rechazo input { accent-color: var(--rojo); }
+
+/* Menús desplegables: ancho fijo y texto que baja de renglón (las alertas largas ya no ocupan toda la pantalla) */
+.desplegable { width: max-content; max-width: min(420px, calc(100vw - 32px)); }
+.alerta-item { line-height: 1.35; border-bottom: 1px solid var(--linea); border-radius: 0; padding: 10px; }
+.alerta-item:last-child { border-bottom: 0; }
+.alerta-item small { margin-top: 3px; }
+
+/* Listas de reglas con tilde verde */
+.lista-pronto.reglas { list-style: none; padding-left: 0; }
+.lista-pronto.reglas li { position: relative; padding-left: 28px; margin: 9px 0; }
+.lista-pronto.reglas li::before { content: ''; position: absolute; left: 2px; top: 5px; width: 13px; height: 7px; border-left: 2.5px solid var(--marca-verde); border-bottom: 2.5px solid var(--marca-verde); transform: rotate(-45deg); }
+
+/* Depósito: certificado e ingreso al stock, lado a lado */
+/* Lado a lado sólo si cada tarjeta tiene al menos 280 px; en la columna angosta de la derecha van una abajo de la otra */
+.par-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: start; margin-bottom: 20px; }
+.par-tarjetas > .tarjeta { margin-bottom: 0; }
+.ingreso-stock { margin-top: 14px; padding: 16px 18px; border-radius: 10px; background: var(--verde-suave); border-left: 4px solid var(--marca-verde); display: grid; gap: 2px; }
+.ingreso-stock small { font-size: 13px; color: var(--verde); font-weight: 600; }
+.ingreso-stock b { font-size: 36px; font-weight: 600; line-height: 1.15; color: var(--verde); }
+.ingreso-stock span { font-size: 13.5px; color: var(--texto-2); }
+.dato .peq { display: block; font-size: 12.5px; font-weight: 400; color: var(--texto-suave); }
+@media (max-width: 900px) { .par-tarjetas { grid-template-columns: 1fr; } }
+
+/* Tablas: los códigos no se parten en dos renglones */
+.tabla td.num, .tabla td.num b { white-space: nowrap; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 700px) {
+  /* los dibujos quedan de fondo, más tenues, para que no compitan con el texto */
+  .ingreso .presentacion::before { opacity: .22; }
+  .ingreso .presentacion::after { display: none; }
+  .ingreso .presentacion { min-height: 0; padding: 28px 20px 22px; }
+  .banner { min-height: 0; padding: 18px 18px; }
+  .banner::before { width: 100%; opacity: .2; background: var(--tono-tinta); }
+  .tarea { flex-wrap: wrap; gap: 12px; } .tarea::after { display: none; }
+  .tarea .texto { flex: 1 1 60%; } .tarea .btn { width: 100%; }
+  .principal::after { height: 70px; }
+  /* encabezados de tarjeta: primero el producto a todo el ancho, abajo los botones */
+  .tarjeta-cab { flex-wrap: wrap; } .tarjeta-cab > .con-prod { flex: 1 1 100%; }
+  .ico-prod.grande { width: 46px; height: 46px; } .ico-prod.grande .ico-linea { font-size: 30px; }
+  /* tablas: sin ícono para ganar lugar, códigos en un renglón y desplazamiento lateral si no entran */
+  .tabla td.prod-celda:has(.ico-prod) { padding-left: 12px; } .tabla td.prod-celda .ico-prod { display: none; }
+  .tabla td:first-child b { white-space: nowrap; }
+  /* tablas con campos para completar (Calidad, Elaborar): cada fila pasa a ser una ficha */
+  .tabla.con-campos thead { display: none; }
+  .tabla.con-campos, .tabla.con-campos tbody { display: block; }
+  .tabla.con-campos tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--linea); }
+  .tabla.con-campos tr:last-child { border-bottom: 0; }
+  .tabla.con-campos td { display: block; padding: 0; border: 0; min-width: 0; }
+  .tabla.con-campos td:first-child { grid-column: 1 / -1; }
+  .tabla.con-campos td .entrada, .tabla.con-campos td select { width: 100%; }
+  .tabla.con-campos td .pill { white-space: normal; }
+  .tabla.con-campos td select.entrada { min-width: 0; width: 100% !important; text-overflow: ellipsis; }
+  .tabla.con-campos td { min-width: 0 !important; }
+  .tabla.con-campos td[style*="min-width"] { grid-column: 1 / -1; }   /* el selector de lote ocupa todo el ancho */
+  .lineas-tira a small { font-size: 11.5px; }
+}
+
+/* Las ayudas del glosario cerca del borde no generan desplazamiento lateral */
+.principal { overflow-x: clip; }
+@media (max-width: 700px) { .termino .explica { width: min(270px, 78vw); } }
+
+/* =====================================================================================
+   DETALLES FINOS (medidos con capturas ampliadas)
+   ===================================================================================== */
+/* Números y letras dentro de círculos: la tipografía los dibuja un poco arriba del centro; se compensa */
+.sidebar .menu a .cuenta { padding-top: .21em; }
+.ingreso .pasos-intro i { padding-top: .18em; }
+.avatar { padding-top: .12em; }
+.paginas button { display: grid; place-items: center; padding: .14em 0 0; }
+.pasos-v .num { width: 28px; height: 28px; }
+.sidebar .menu a .paso-n { width: 22px; height: 22px; }
+
+/* Barra de arriba opaca: el contenido ya no se transparenta al desplazar */
+.topbar { background: var(--superficie); backdrop-filter: none; }
+
+/* Franjas de color rectas (antes eran bordes que se afinaban en las esquinas redondeadas) */
+.tarea { border-left: 1px solid var(--linea); background: linear-gradient(var(--marca-verde), var(--marca-verde)) left / 5px 100% no-repeat, var(--superficie); padding-left: 26px; }
+.kpi { border-top: 1px solid var(--linea); background: linear-gradient(var(--franja, var(--acero)), var(--franja, var(--acero))) top / 100% 4px no-repeat, var(--superficie); }
+.kpi.destacado { --franja: var(--ambar); border-top-color: var(--ambar); background: linear-gradient(var(--ambar), var(--ambar)) top / 100% 4px no-repeat, var(--ambar-suave); }
+.kpi:last-child { --franja: var(--marca-verde); border-top-color: var(--linea); }
+
+/* "Cómo funciona": las cuatro tarjetas alinean su pie aunque el texto tenga distinto largo */
+.flujo .etapa-flujo { display: flex; flex-direction: column; align-items: flex-start; }
+.flujo .etapa-flujo .rol { margin-top: auto; }
+.flujo .etapa-flujo p + .rol { margin-top: auto; }
+.flujo .etapa-flujo > a, .flujo .etapa-flujo > .enlace { margin-top: 12px; }
+.flujo .etapa-flujo p:last-of-type { margin-bottom: 14px; }
+
+/* =====================================================================================
+   MODO CLARO · "Campo": el verde manda.
+   Menú verde profundo, encabezados claros con el dibujo en tinta verde y una franja del color del área,
+   tablas con encabezado verde suave. El naranja queda para la acción principal y los contadores.
+   (El modo oscuro mantiene el menú gris carbón y los encabezados en bloque de color.)
+   ===================================================================================== */
+:root:not([data-tema="oscuro"]) { --fondo: #EDEFE8; }
+:root:not([data-tema="oscuro"]) .sidebar { --lamina: #2C5530; --superficie: #2C5530; --fondo: #346238; --linea: #46764A; --gris-suave: #396A3D;
+  --texto: #FFFFFF; --texto-2: #E1ECDD; --texto-suave: #BFD6BA; }
+:root:not([data-tema="oscuro"]) .sidebar .menu a.activo { background: #F4F2EE; color: #244A27; }
+:root:not([data-tema="oscuro"]) .sidebar .menu a.activo .quien { color: #3D7A3C; }
+:root:not([data-tema="oscuro"]) .sidebar .menu a.activo .paso-n { background: var(--marca-verde); border-color: var(--marca-verde); color: #fff; }
+:root:not([data-tema="oscuro"]) .sidebar .menu a.activo .cuenta { background: var(--ambar); color: #2A2100; }
+:root:not([data-tema="oscuro"]) .topbar { border-bottom: 1px solid var(--linea); }
+:root:not([data-tema="oscuro"]) .banner { --color-area: var(--marca-verde); --tono-tinta: var(--texto); --tono-tinta-2: var(--texto-2);
+  background: linear-gradient(var(--color-area), var(--color-area)) left / 8px 100% no-repeat, var(--superficie); border: 1px solid var(--linea); padding-left: 34px; }
+:root:not([data-tema="oscuro"]) .banner::before { background: linear-gradient(90deg, transparent, var(--marca-verde) 34%); opacity: .6; }
+:root:not([data-tema="oscuro"]) .banner.produccion { --color-area: var(--ambar); }
+:root:not([data-tema="oscuro"]) .banner.calidad { --color-area: var(--acero); }
+:root:not([data-tema="oscuro"]) .banner.deposito { --color-area: var(--marca-lima); }
+:root:not([data-tema="oscuro"]) .banner.consulta { --color-area: #33373A; }
+:root:not([data-tema="oscuro"]) .banner .miga { color: var(--verde) !important; }
+:root:not([data-tema="oscuro"]) .banner .btn { box-shadow: none; border-color: var(--linea); }
+:root:not([data-tema="oscuro"]) .banner.produccion .btn.primario { background: var(--ambar); border-color: var(--ambar); color: var(--sobre-ambar); }
+:root:not([data-tema="oscuro"]) .banner .pill { background: var(--gris-suave); }
+:root:not([data-tema="oscuro"]) .tabla th { background: var(--verde-suave); color: var(--verde); }
+:root:not([data-tema="oscuro"]) .lineas-tira a { background: var(--superficie); color: var(--texto); border: 1px solid var(--linea); }
+:root:not([data-tema="oscuro"]) .lineas-tira a small { color: var(--texto-suave); }
+:root:not([data-tema="oscuro"]) .lineas-tira a .ico-linea { background: var(--texto-suave); }
+:root:not([data-tema="oscuro"]) .lineas-tira a.con-ordenes { background: var(--lima-suave); border-color: var(--marca-lima); }
+:root:not([data-tema="oscuro"]) .lineas-tira a.con-ordenes .ico-linea { background: var(--verde); }
+:root:not([data-tema="oscuro"]) .lineas-tira a.con-ordenes small { color: var(--verde); }
+
+
+/* Números del circuito en el menú: discos llenos (no aros) */
+.sidebar .menu a .paso-n { border: 0; background: var(--marca-lima); color: #1F2A0C; }
+.sidebar .menu a.activo .paso-n { background: #1F2A0C; color: var(--marca-lima); }
+:root:not([data-tema="oscuro"]) .sidebar .menu a .paso-n { background: var(--marca-verde); color: #fff; }
+:root:not([data-tema="oscuro"]) .sidebar .menu a.activo .paso-n { background: var(--marca-verde); color: #fff; }
+.sidebar .menu a .paso-n { padding-top: .21em; }
+
+/* =====================================================================================
+   VERDE DEL LOGO (#1FA34A): el color propio de SIGTA.
+   Es más vivo que el verde de la paleta, así que se usa poco y sólo donde habla la marca:
+   el nombre de la app, lo que tiene el foco, el texto seleccionado y la línea bajo la barra de arriba.
+   ===================================================================================== */
+/* Nombre de la app al pasar el cursor */
+.marca a.sigta-titulo { padding: 4px 8px 4px 4px; margin: -4px -8px -4px -4px; transition: background-color .15s; }
+.marca a.sigta-titulo b { transition: color .15s; }
+.marca a.sigta-titulo:hover b, .marca a.sigta-titulo:focus-visible b { color: var(--marca-logo); }
+.marca a.sigta-titulo:hover, .marca a.sigta-titulo:focus-visible { background: rgba(0, 0, 0, .28); }   /* oscurece el fondo para que el verde se lea bien */
+/* Lo que tiene el foco (teclado) y los campos activos */
+:focus-visible { outline-color: var(--marca-logo); }
+.entrada:focus { border-color: var(--marca-logo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--marca-logo) 22%, transparent); }
+/* Texto seleccionado */
+::selection { background: var(--marca-logo); color: #fff; }
+/* Línea bajo la barra de arriba, en los dos modos */
+.topbar, :root:not([data-tema="oscuro"]) .topbar { border-bottom: 3px solid var(--marca-logo); }
+/* Enlaces al pasar el cursor, casillas y botones de opción */
+.enlace:hover { color: var(--marca-logo); }
+:root[data-tema="oscuro"] .enlace:hover { color: #4FCB78; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--marca-logo); }
+.opcion-dictamen.rechazo input { accent-color: var(--rojo); }
+/* Pantalla de ingreso: los números de los pasos llevan el verde del logo que tienen al lado */
+.ingreso .pasos-intro i { background: var(--marca-logo); color: #fff; }
+
+/* =====================================================================================
+   MODO OSCURO · menú lateral con el verde del logo (#1FA34A)
+   Sólo en el menú y sólo en lo que ya era verde: la opción activa, los números de los pasos y los títulos.
+   El resto de la página conserva la lima. El texto sobre el verde es casi negro para que se lea bien.
+   ===================================================================================== */
+:root[data-tema="oscuro"] .sidebar .menu a.activo { background: var(--marca-logo); color: #082010; }
+:root[data-tema="oscuro"] .sidebar .menu a.activo .quien { color: #0E3A1C; }
+:root[data-tema="oscuro"] .sidebar .menu a .paso-n { background: var(--marca-logo); color: #082010; }
+:root[data-tema="oscuro"] .sidebar .menu a.activo .paso-n { background: #082010; color: var(--marca-logo); }
+:root[data-tema="oscuro"] .sidebar .menu-titulo { color: var(--marca-logo); }
+
+/* Logo de Agrifood: enlace a su web */
+a.logo-agrifood { display: inline-flex; border-radius: 10px; transition: transform .15s, box-shadow .15s; }
+a.logo-agrifood:hover { transform: translateY(-1px); box-shadow: 0 0 0 2px var(--marca-logo); }
+
+/* ---------- Notificaciones de la campana: se tocan y llevan a donde está el problema ---------- */
+button.alerta-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--linea); font: inherit; color: inherit; cursor: pointer; }
+button.alerta-item:last-child { border-bottom: 0; }
+button.alerta-item:hover, button.alerta-item:focus-visible { background: var(--lima-suave); }
+.alerta-item .alerta-ver { float: right; color: var(--verde); font-weight: 600; }
+/* Fila de un insumo que falta en planta */
+.tabla tr.fila-falta td:first-child b { color: var(--rojo); }
+/* Al llegar a una sección por enlace (#para-resolver, #faltantes) queda a la vista bajo la barra de arriba */
+#para-resolver, #faltantes { scroll-margin-top: 90px; }
+
+/* Notificaciones vigentes: título, detalle y una franja según la gravedad */
+button.alerta-item { padding-left: 14px; border-left: 3px solid transparent; }
+button.alerta-item.alta { border-left-color: var(--rojo); }
+button.alerta-item.media { border-left-color: var(--ambar); }
+button.alerta-item b { display: block; margin-bottom: 2px; }

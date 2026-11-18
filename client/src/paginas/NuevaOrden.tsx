@@ -1,11 +1,12 @@
 /** Paso 1 · Planificar orden de producción (CU-P01). También completa un borrador (/ordenes/:id). */
+import { IconoProducto } from '../componentes/IconoLinea';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useDatos } from '../lib/useDatos';
 import { useSesion } from '../contexto/Sesion';
 import { useDialogos } from '../contexto/Dialogos';
-import { hoyTexto, leerNumero, num, pesoTexto } from '../lib/formato';
+import { hoyTexto, leerNumero, num, pesoTexto, unidad } from '../lib/formato';
 import type { Linea, Orden, Producto, Verificacion } from '../lib/tipos';
 import { Cabecera, Cargando, ConUnidad, Dato, ErrorCarga, Miga, Pill, Termino } from '../componentes/Comunes';
 import { Proceso } from '../componentes/Proceso';
@@ -86,7 +87,10 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
     setGuardando(true);
     try {
       const orden = borrador ? await api.put<Orden>(`/ordenes/${borrador.id}`, cuerpo) : await api.post<Orden>('/ordenes', cuerpo);
-      if (accion === 'PLANIFICAR') {
+      if (accion === 'PLANIFICAR' && verificacion && !verificacion.planificable) {
+        aviso(`${orden.numero} planificada. Se avisó a Compras: se podrá elaborar cuando lleguen los insumos.`, 'ok');
+        navegar('/panel');
+      } else if (accion === 'PLANIFICAR') {
         aviso(`${orden.numero} planificada. Siguiente paso: elaborar.`, 'ok');
         navegar(`/ejecucion/${orden.id}`);
       } else {
@@ -137,8 +141,8 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
 
       <section className="tarjeta" data-testid="ficha-producto">
         <div className="tarjeta-cab">
-          <div><h2>{producto.nombre} · {producto.presentacion}</h2>
-            <p className="sub">{producto.categoria_nombre} · {producto.familia} · Vida útil {producto.vida_util_meses} meses · {producto.unidades_por_pallet} unidades por pallet{producto.unidades_por_caja ? ` · cajas de ${producto.unidades_por_caja}` : ''}</p></div>
+          <div className="con-prod"><IconoProducto de={producto.nombre} grande /><div><h2>{producto.nombre} · {producto.presentacion}</h2>
+            <p className="sub">{producto.categoria_nombre} · {producto.familia} · Vida útil {producto.vida_util_meses} meses · {producto.unidades_por_pallet} unidades por pallet{producto.unidades_por_caja ? ` · cajas de ${producto.unidades_por_caja}` : ''}</p></div></div>
           {producto.url_web && <a className="btn chico" href={producto.url_web} target="_blank" rel="noreferrer">Ver en la web de Agrifood ↗</a>}
         </div>
         <details className="plegable" style={{ marginTop: 0 }}><summary>Ver ficha técnica (ingredientes, alérgenos, almacenamiento y embalaje)</summary>
@@ -155,13 +159,13 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
         <div className="tarjeta-cab">
           <div><h2>Insumos</h2>
             <p className="sub">{kgPedidos > 0 ? `Receta para ${num(kgPedidos)} kg · se obtienen unas ${num(unidades)} unidades de ${pesoTexto(producto.presentacion_kg)} (${pallets} ${pallets === 1 ? 'pallet' : 'pallets'})` : 'Ingresá una cantidad para calcular.'}</p></div>
-          {verificacion && kgPedidos > 0 && <span><span className="fraccion" style={{ fontSize: 30 }}>{verificacion.criticosOk}/{verificacion.criticosTotal}</span> <span style={{ color: 'var(--texto-suave)' }}>disponibles</span></span>}
+          {verificacion && kgPedidos > 0 && <span><span className="fraccion" style={{ fontSize: 30, color: verificacion.planificable ? undefined : 'var(--ambar-oscuro)' }}>{verificacion.criticosOk}/{verificacion.criticosTotal}</span> <span style={{ color: 'var(--texto-suave)' }}>insumos críticos disponibles</span></span>}
         </div>
         {!(kgPedidos > 0) ? null : !verificacion ? <Cargando /> : (<>
-          <div className={`aviso ${verificacion.planificable ? 'verde' : 'rojo'}`} style={{ marginBottom: 0 }}>
+          <div className={`aviso ${verificacion.planificable ? 'verde' : 'ambar'}`} style={{ marginBottom: 0 }}>
             <Icono n={verificacion.planificable ? 'checkCirculo' : 'info'} />
-            <div><b>{verificacion.planificable ? 'Sin faltantes' : 'Hay faltantes críticos'}</b>
-              {verificacion.planificable ? 'Hay stock de todos los insumos críticos: podés planificar la orden.' : 'No se puede planificar. Guardá un borrador: se avisa a Compras automáticamente.'}</div>
+            <div><b>{verificacion.planificable ? (verificacion.hayFaltantes ? 'Sin faltantes críticos' : 'Sin faltantes') : 'Faltan insumos críticos'}</b>
+              {verificacion.planificable ? (verificacion.hayFaltantes ? 'Podés planificar la orden. Falta un insumo no crítico: al guardar se avisa a Compras.' : 'Hay stock de todos los insumos: podés planificar la orden.') : 'Podés planificar igual: la orden queda en el plan, se avisa a Compras y la elaboración arranca cuando llegue lo que falta.'}</div>
           </div>
           <table className="tabla" style={{ marginTop: 16 }}>
             <thead><tr><th>Materia prima / empaque</th><th>Requerido</th><th>Disponible</th><th>Faltante</th><th>Estado</th></tr></thead>
@@ -169,7 +173,7 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
               <tr key={i.insumo_id}>
                 <td><b>{i.nombre}</b><span className="peq">{i.codigo} · {i.tipo === 'MP' ? 'Materia prima' : i.critico ? 'Empaque crítico' : 'Empaque'}</span></td>
                 <td className="num">{num(i.requerido)} {i.unidad}</td><td className="num">{num(Math.max(0, i.disponible))} {i.unidad}</td>
-                <td className="num">{i.ok ? '—' : `${num(i.faltante)} ${i.unidad}`}</td>
+                <td className="num">{i.ok ? '—' : `${num(i.faltante)} ${unidad(i.faltante, i.unidad)}`}</td>
                 <td>{i.ok ? <Pill color="verde">Suficiente</Pill> : <Pill color="rojo">{i.critico ? 'Faltante crítico' : 'Faltante'}</Pill>}</td>
               </tr>))}</tbody>
           </table>
@@ -181,7 +185,7 @@ function Formulario({ productos, lineas, borrador, numero }: { productos: Produc
         <div className="botones">
           <Link className="btn" to="/panel">Cancelar</Link>
           <button className="btn" disabled={!habilitado || guardando || !(kgPedidos > 0)} title={titulo('guardar órdenes')} onClick={() => guardar('BORRADOR')}><Icono n="guardar" /> Guardar borrador</button>
-          <button className="btn primario" disabled={!habilitado || guardando || !verificacion?.planificable} title={titulo('planificar órdenes')} onClick={() => guardar('PLANIFICAR')}><Icono n="check" /> Confirmar y planificar</button>
+          <button className="btn primario" disabled={!habilitado || guardando || !verificacion || !(kgPedidos > 0)} title={titulo('planificar órdenes')} onClick={() => guardar('PLANIFICAR')}><Icono n="check" /> {verificacion && !verificacion.planificable ? 'Planificar igual' : 'Confirmar y planificar'}</button>
         </div>
       </div>
     </>

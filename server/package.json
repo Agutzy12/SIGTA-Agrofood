@@ -2,10 +2,14 @@
   "name": "server",
   "private": true,
   "version": "1.0.0",
-  "description": "API REST de SIGTA (Express + TypeScript + Prisma + PostgreSQL)",
+  "description": "SIGTA · API REST (Express + TypeScript + Prisma + PostgreSQL) para Agrifood Argentina S.A.",
   "type": "module",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
+    "setup": "npm run db:migrate && npm run db:seed",
     "postinstall": "prisma generate",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "prisma generate && tsc -p tsconfig.build.json",
@@ -40,5 +44,7 @@
     "typescript": "5.9.3",
     "vite": "6.4.6",
     "vitest": "3.2.7"
-  }
+  },
+  "author": "Benitez Agustin",
+  "license": "MIT"
 }

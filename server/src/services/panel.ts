@@ -106,9 +106,9 @@ export async function pendientesPorPaso() {
     db().ordenProduccion.count({ where: { estado: { in: ['PLANIFICADA', 'EN_PRODUCCION'] } } }),
     db().loteProduccion.count({ where: { estado: 'CUARENTENA' } }),
     db().ordenProduccion.count({ where: { estado: 'EN_CONTROL_CALIDAD', lote: { estado: 'APROBADO_LIBERADO' } } }),
-    db().auditoria.count({ where: { accion: { startsWith: 'ALERTA' } } }),
+    listAlertas(),
   ]);
-  return { planificar: borradores, elaborar: paraElaborar, calidad: enCuarentena, deposito: paraRecibir, alertas: Math.min(alertas, 8) };
+  return { planificar: borradores, elaborar: paraElaborar, calidad: enCuarentena, deposito: paraRecibir, alertas: alertas.length };
 }
 
 /** Botón "Avisar a Compras": deja registrado el aviso por stock bajo. */
@@ -120,5 +120,81 @@ export async function avisarCompras(usuario: UsuarioActual, insumoId: number) {
   return { ok: true };
 }
 
-/** Últimas alertas (campanita de la barra superior). */
-export const listAlertas = () => db().auditoria.findMany({ where: { accion: { startsWith: 'ALERTA' } }, orderBy: { id: 'desc' }, take: 8 });
+/** Una notificación de la campana. Se calcula en el momento: si el problema se resolvió, ya no aparece. */
+export interface Alerta {
+  id: string;
+  tipo: 'faltantes' | 'stock' | 'rechazo';
+  gravedad: 'alta' | 'media';
+  titulo: string;
+  detalle: string;
+  destino: string;   // la pantalla donde se ve el problema
+  fecha: Date | null;
+}
+
+const DIAS_ALERTA_RECHAZO = 7;
+const cantidad = (n: number, unidad: string) => `${redondear(n).toLocaleString('es-AR')} ${unidad}`;
+const resumir = (partes: string[], max = 3) => partes.slice(0, max).join('; ') + (partes.length > max ? `; y ${partes.length - max} más` : '');
+
+/**
+ * Notificaciones de la campana: lo que hay que resolver AHORA, con los números de hoy.
+ * - Órdenes abiertas (borrador o planificadas) a las que les falta material en planta.
+ * - Insumos por debajo del stock mínimo.
+ * - Lotes rechazados por Calidad en los últimos días.
+ */
+export async function listAlertas(): Promise<Alerta[]> {
+  const [ordenes, insumos, rechazos] = await Promise.all([
+    db().ordenProduccion.findMany({
+      where: { estado: { in: ['CREADA', 'PLANIFICADA'] } }, orderBy: { secuencia: 'asc' },
+      include: { producto: true, items: { include: { insumo: true } } },
+    }),
+    stockInsumos(),
+    db().auditoria.findMany({
+      where: { accion: 'ALERTA_NO_CONFORMIDAD', fecha: { gte: new Date(ahora().getTime() - DIAS_ALERTA_RECHAZO * 86_400_000) } },
+      orderBy: { id: 'desc' },
+    }),
+  ]);
+  const enPlanta = new Map(insumos.map((i) => [i.id, i.stock]));
+  const alertas: Alerta[] = [];
+
+  // 1) Órdenes a las que les falta material: lo que pide la receta contra lo que hay hoy en planta
+  for (const op of ordenes) {
+    const faltan = op.items
+      .map((it) => ({ it, falta: it.cantidad_teorica - (enPlanta.get(it.insumo_id) ?? 0) }))
+      .filter((x) => x.falta > 0)
+      .sort((a, b) => Number(b.it.insumo.critico) - Number(a.it.insumo.critico));
+    if (!faltan.length) continue;
+    const criticos = faltan.some((x) => x.it.insumo.critico);
+    alertas.push({
+      id: `faltantes-${op.id}`, tipo: 'faltantes', gravedad: criticos ? 'alta' : 'media',
+      titulo: `${op.numero} · ${op.producto.nombre}: faltan insumos`,
+      detalle: `${op.estado === 'CREADA' ? 'Borrador' : 'Planificada'}. Falta: ${resumir(faltan.map((x) => `${x.it.insumo.nombre} ${cantidad(x.falta, x.it.insumo.unidad)}`))}.`,
+      destino: op.estado === 'CREADA' ? `/ordenes/${op.id}` : `/ejecucion/${op.id}`,
+      fecha: op.creado_en,
+    });
+  }
+
+  // 2) Stock bajo: lo mismo que muestra "Para resolver" en el Panel (disponible = en planta menos lo reservado)
+  const bajos = insumos.filter((i) => i.bajo);
+  if (bajos.length) {
+    alertas.push({
+      id: 'stock-bajo', tipo: 'stock', gravedad: bajos.some((i) => i.disponible < 0) ? 'alta' : 'media',
+      titulo: bajos.length === 1 ? `Stock bajo de ${bajos[0].nombre}` : `Stock bajo de ${bajos.length} insumos`,
+      detalle: `${resumir(bajos.map((i) => (i.disponible < 0
+        ? `${i.nombre}: faltan ${cantidad(-i.disponible, i.unidad)} para las órdenes planificadas`
+        : `${i.nombre}: ${cantidad(i.disponible, i.unidad)} (mínimo ${cantidad(i.stock_minimo, i.unidad)})`)))}.`,
+      destino: '/panel#para-resolver', fecha: null,
+    });
+  }
+
+  // 3) Lotes rechazados por Calidad en los últimos días
+  for (const r of rechazos) {
+    alertas.push({
+      id: `rechazo-${r.id}`, tipo: 'rechazo', gravedad: 'alta',
+      titulo: `Lote rechazado ${r.entidad ?? ''}`.trim(),
+      detalle: r.detalle ?? '', destino: `/trazabilidad?q=${encodeURIComponent(r.entidad ?? '')}`, fecha: r.fecha,
+    });
+  }
+
+  const peso = { alta: 0, media: 1 };
+  return alertas.sort((a, b) => peso[a.gravedad] - peso[b.gravedad] || (b.fecha?.getTime() ?? 0) - (a.fecha?.getTime() ?? 0));
+}

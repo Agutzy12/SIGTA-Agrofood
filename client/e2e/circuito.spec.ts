@@ -1,19 +1,19 @@
 /**
- * Recorre el guion de la demo completo en el navegador:
+ * Recorre el circuito completo en el navegador:
  * planificar → elaborar → controlar calidad → ingresar a depósito → trazar, con cada rol.
+ * Necesita la API (SIGTA-Agrofood-Back) con los datos iniciales recién cargados: npm run db:seed en el Back.
  */
 import { expect, test } from '@playwright/test';
-import { ingresarComo, reiniciarDemo } from './ayuda';
+import { cambiarUsuario, ingresarComo } from './ayuda';
 
 test.describe.configure({ mode: 'serial' });
-test.beforeAll(async ({ baseURL }) => { await reiniciarDemo(baseURL!); });
 
 test('la pantalla de ingreso explica qué es SIGTA y rechaza una contraseña incorrecta', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/ingresar/);
   await expect(page.getByRole('heading', { name: 'Gestión y Trazabilidad Alimentaria' })).toBeVisible();
   await expect(page.getByAltText('Agrifood Argentina')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Probar la demo' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Acceso rápido' })).toBeVisible();
   await page.getByLabel('Email').fill('calidad@sigta.demo');
   await page.getByLabel('Contraseña').fill('equivocada');
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
@@ -36,10 +36,10 @@ test('circuito completo: de la orden al stock vendible, con la trazabilidad fina
   await expect(page.getByTestId('ficha-producto')).toContainText('Línea Pastas Secas');
   await page.getByLabel('Cantidad *').fill('1000');
   await expect(page.getByText('Sin faltantes')).toBeVisible();
-  // con una cantidad enorme no deja planificar
+  // con una cantidad enorme avisa que faltan insumos, pero deja planificar igual
   await page.getByLabel('Cantidad *').fill('100000');
-  await expect(page.getByText('Hay faltantes críticos')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Confirmar y planificar' })).toBeDisabled();
+  await expect(page.getByText('Faltan insumos críticos')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Planificar igual' })).toBeEnabled();
   await page.getByLabel('Cantidad *').fill('1000');
   await expect(page.getByText('Sin faltantes')).toBeVisible();
   await page.getByRole('button', { name: 'Confirmar y planificar' }).click();
@@ -63,10 +63,11 @@ test('circuito completo: de la orden al stock vendible, con la trazabilidad fina
   const lote = (await page.getByRole('dialog').locator('b').first().innerText()).match(/L-COD500-\d{6}-\d{2}/)![0];
   await page.getByRole('button', { name: 'Ir a Control de calidad' }).click();
 
-  // 3) Controlar calidad: Producción no puede firmar; cambia a Técnica de calidad desde la guía
+  // 3) Controlar calidad: Producción no puede firmar; entra la Técnica de calidad
   await expect(page).toHaveURL(/\/calidad\/\d+/);
   await expect(page.getByRole('button', { name: 'Firmar protocolo' })).toBeDisabled();
-  await page.getByRole('button', { name: /Cambiar a Técnico de calidad/ }).click();
+  await expect(page.getByRole('button', { name: /Cambiar a Técnico de calidad/ })).toHaveCount(0); // ya no se cambia de rol desde la guía
+  await cambiarUsuario(page, /Técnica de calidad/);
   await expect(page.locator('header .usuario')).toContainText('Lucía Benítez');
   await expect(page.locator('.lote-item.sel')).toContainText(lote);
   // humedad fuera de especificación: no se puede aprobar
@@ -82,7 +83,7 @@ test('circuito completo: de la orden al stock vendible, con la trazabilidad fina
 
   // 4) Ingresar a depósito (Operario de depósito)
   await expect(page).toHaveURL(/\/deposito\/\d+/);
-  await page.getByRole('button', { name: /Cambiar a Operario de depósito/ }).click();
+  await cambiarUsuario(page, /Operario de depósito/);
   await expect(page.getByText('Liberación verificada')).toBeVisible();
   await expect(page.locator('#pallets')).toHaveValue('4'); // 1.960 paquetes, 600 por pallet (palletizado de la web)
   await page.getByRole('button', { name: 'Confirmar ingreso y cerrar OP' }).click();
@@ -191,7 +192,8 @@ test('glosario, ayuda y modo oscuro', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-tema', 'oscuro');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-tema', 'oscuro');
-  await expect(page.getByAltText('Agrifood Argentina')).toHaveAttribute('src', '/img/logo-oscuro.png');
+  // el menú es gris carbón en los dos modos: el logo de Agrifood va siempre en color sobre su plaquita blanca
+  await expect(page.getByAltText('Agrifood Argentina')).toHaveAttribute('src', '/img/logo.png');
 });
 
 test('en el celular el menú se despliega y no hay desplazamiento horizontal', async ({ page }) => {
@@ -202,4 +204,37 @@ test('en el celular el menú se despliega y no hay desplazamiento horizontal', a
   await page.getByRole('button', { name: 'Abrir menú' }).click();
   await page.locator('.sidebar').getByRole('link', { name: /Elaborar/ }).click();
   await expect(page.getByRole('heading', { name: 'Elaborar', level: 1 })).toBeVisible();
+});
+
+test('las notificaciones llevan a donde está el problema y se puede planificar aunque falten insumos', async ({ page }) => {
+  await ingresarComo(page, /Supervisor de producción/);
+  // planificar con faltantes: queda planificada y avisa a Compras
+  await page.goto('/ordenes/nueva');
+  await page.getByLabel('Cantidad *').fill('90000');
+  await expect(page.getByText('Faltan insumos críticos')).toBeVisible();
+  await page.getByRole('button', { name: 'Planificar igual' }).click();
+  await expect(page).toHaveURL(/\/panel/);
+  const numero = (await page.locator('.tostada').first().innerText()).match(/OP-\d{4}-\d{5}/)![0];
+
+  // la notificación de esa orden lleva a la orden, que muestra qué falta y no deja iniciar
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: numero }).click();
+  await expect(page).toHaveURL(/\/ejecucion\/\d+/);
+  await expect(page.getByText(/Todavía no se puede elaborar: faltan/)).toBeVisible();
+  await expect(page.locator('tr.fila-falta').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Iniciar elaboración' })).toBeDisabled();
+
+  // la de un lote rechazado lleva a su trazabilidad
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: 'Lote rechazado' }).first().click();
+  await expect(page).toHaveURL(/\/trazabilidad\?q=/);
+  await expect(page.getByRole('heading', { name: 'Recorrido del lote' })).toBeVisible();
+
+  // se cancela la orden de prueba para no dejar insumos reservados
+  await page.getByRole('button', { name: 'Alertas' }).click();
+  await page.locator('button.alerta-item', { hasText: numero }).click();
+  await page.getByRole('button', { name: 'Cancelar orden' }).click();
+  await page.getByLabel('Motivo de la cancelación').fill('Prueba automática');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar orden' }).click();
+  await expect(page).toHaveURL(/\/panel/);
 });

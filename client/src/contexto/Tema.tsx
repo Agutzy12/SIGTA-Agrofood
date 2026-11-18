@@ -44,6 +44,9 @@ export function ProveedorTema({ children }: { children: ReactNode }) {
 }
 
 /** Logo de Agrifood Argentina: en modo oscuro se usa la versión con fondo transparente. */
+/** Web oficial de Agrifood Argentina: a donde lleva su logo al tocarlo. */
+export const WEB_AGRIFOOD = 'https://agrifood-argentina.com';
+
 export function LogoEmpresa({ alto = 34, siempreClaro = false }: { alto?: number; siempreClaro?: boolean }) {
   const { tema } = useTema();
   const oscuro = tema === 'oscuro' && !siempreClaro;

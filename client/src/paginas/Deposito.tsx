@@ -1,4 +1,5 @@
 /** Paso 4 · Ingresar a depósito: verificación física, pallets, ubicación y cierre de la OP (CU-P04). */
+import { IconoProducto } from '../componentes/IconoLinea';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -97,7 +98,7 @@ function FormularioRecepcion({ rec, pendientes }: { rec: Recepcion; pendientes: 
       contenido: pendientes.length ? (
         <table className="tabla clic"><tbody>{pendientes.map((p) => (
           <tr key={p.op_id} onClick={() => { cerrar(); navegar(`/deposito/${p.op_id}`); }}>
-            <td><b>{p.lote_codigo}</b><span className="peq">{p.producto_nombre}</span></td><td>{kg(p.cantidad_kg)}</td><td>{p.op_numero}</td></tr>
+            <td className="prod-celda"><IconoProducto de={p.producto_nombre} /><b>{p.lote_codigo}</b><span className="peq">{p.producto_nombre}</span></td><td>{kg(p.cantidad_kg)}</td><td>{p.op_numero}</td></tr>
         ))}</tbody></table>) : <p>No hay otros lotes liberados.</p>,
     });
   };
@@ -130,7 +131,7 @@ function FormularioRecepcion({ rec, pendientes }: { rec: Recepcion; pendientes: 
     <>
       {!rec.habilitado && <div className="aviso rojo"><Icono n="candado" tam={22} /><div><b>No se puede recibir este lote · <Termino t="bloqueo">bloqueo lógico</Termino></b>{rec.motivo}</div></div>}
       <section className="tarjeta">
-        <div className="tarjeta-cab"><div><h2>{producto.nombre} · {producto.presentacion}</h2><p className="sub">{num(lote.bultos)} unidades de {pesoTexto(producto.presentacion_kg)} · {producto.unidades_por_pallet} por pallet · lote liberado por Calidad</p></div>
+        <div className="tarjeta-cab"><div className="con-prod"><IconoProducto de={producto.nombre} grande /><div><h2>{producto.nombre} · {producto.presentacion}</h2><p className="sub">{num(lote.bultos)} unidades de {pesoTexto(producto.presentacion_kg)} · {producto.unidades_por_pallet} por pallet · lote liberado por Calidad</p></div></div>
           <button className="btn" onClick={cambiarLote}><Icono n="chevAbajo" tam={16} /> Cambiar lote</button></div>
         <div className="rejilla col-3"><Dato titulo="Lote">{lote.codigo}</Dato><Dato titulo="Orden">{rec.op.numero}</Dato><Dato titulo="Elaborado · Vencimiento">{kg(lote.cantidad_kg)} · {fecha(lote.vencimiento)}</Dato></div>
       </section>
@@ -172,20 +173,22 @@ function FormularioRecepcion({ rec, pendientes }: { rec: Recepcion; pendientes: 
           </section>
         </div>
 
-        <div>
+        <div className="par-tarjetas">
           <section className="tarjeta"><h2>Certificado de calidad</h2>
             {cert ? (<>
-              <div className="check" style={{ margin: '14px 0' }}><Icono n="escudo" /><b style={{ color: 'var(--verde)' }}>Liberación verificada</b></div>
-              <div style={{ marginBottom: 12 }}><Dato titulo="Protocolo">{cert.protocolo}</Dato></div>
-              <div style={{ marginBottom: 16 }}><Dato titulo="Firmado por">{cert.analista} · {fechaHora(cert.fecha)}</Dato></div>
-              <button className="btn" onClick={() => verProtocolo(lote.id)}><Icono n="documento" /> Ver protocolo</button>
+              <div className="check" style={{ margin: '10px 0 12px' }}><Icono n="escudo" /><b style={{ color: 'var(--verde)' }}>Liberación verificada</b></div>
+              <div className="rejilla col-2" style={{ gap: 14, marginBottom: 16 }}>
+                <Dato titulo="Protocolo">{cert.protocolo}</Dato>
+                <Dato titulo="Firmado por">{cert.analista}<span className="peq">{fechaHora(cert.fecha)}</span></Dato>
+              </div>
+              <button className="btn chico" onClick={() => verProtocolo(lote.id)}><Icono n="documento" /> Ver protocolo</button>
             </>) : <p className="sub">Sin protocolo firmado.</p>}
           </section>
           <section className="tarjeta"><h2>Ingreso al stock</h2>
-            <div className="atencion-caja" style={{ margin: '16px 0 0' }}>
-              <small style={{ color: 'var(--ambar-oscuro)' }}>Stock vendible a incrementar</small>
-              <div style={{ fontSize: 34, fontWeight: 600, color: 'var(--ambar-oscuro)' }}>+{num(kgOk, Number.isInteger(kgOk) ? 0 : 1)} kg</div>
-              <small style={{ color: 'var(--ambar-oscuro)' }}>{num(bultos)} unidades · {plural(pallets.length, 'pallet')} · {hayDesvio ? `Diferencia ${kg(Math.max(0, diferencia))}` : 'Sin diferencias'}</small>
+            <div className="ingreso-stock">
+              <small>Stock vendible a incrementar</small>
+              <b>+{num(kgOk, Number.isInteger(kgOk) ? 0 : 1)} kg</b>
+              <span>{num(bultos)} unidades · {plural(pallets.length, 'pallet')} · {hayDesvio ? `Diferencia ${kg(Math.max(0, diferencia))}` : 'Sin diferencias'}</span>
             </div>
           </section>
         </div>
@@ -233,9 +236,9 @@ function StockPT() {
       {stock.length ? (
         <table className="tabla"><thead><tr><th>Lote</th><th>Producto</th><th>Ubicación</th><th>Stock</th><th>Vence</th><th></th></tr></thead>
           <tbody>{stock.map((s) => (
-            <tr key={s.id}><td><b>{s.lote_codigo}</b></td><td>{s.producto_nombre}</td><td>{s.sector.split(' ·')[0]} / {s.rack} / {s.nivel}</td>
+            <tr key={s.id}><td className="num"><b>{s.lote_codigo}</b></td><td className="prod-celda"><IconoProducto de={s.producto_nombre} />{s.producto_nombre}</td><td className="num">{s.sector.split(' ·')[0]} / {s.rack} / {s.nivel}</td>
               <td className="num">{kg(s.cantidad_kg)}</td><td>{fecha(s.vencimiento)}</td>
-              <td><button className="enlace" onClick={() => despachar(s)}>Registrar despacho →</button></td></tr>
+              <td><button className="enlace" onClick={() => despachar(s)} title="Registrar un despacho de este lote" style={{ whiteSpace: 'nowrap' }}>Despachar →</button></td></tr>
           ))}</tbody></table>
       ) : <Vacio titulo="Todavía no hay stock vendible" />}
     </section>

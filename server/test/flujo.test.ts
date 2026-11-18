@@ -5,7 +5,8 @@
 import { beforeAll, afterAll, describe, expect, test } from 'vitest';
 import { prisma } from '../src/db.js';
 import { cargarDatosDeEjemplo } from '../src/seed/seed.js';
-import { api, type RolPrueba } from './ayuda.js';
+import request from 'supertest';
+import { api, app, type RolPrueba } from './ayuda.js';
 
 const PROD: RolPrueba = 'PRODUCCION', CAL: RolPrueba = 'CALIDAD', DEP: RolPrueba = 'DEPOSITO', DIR: RolPrueba = 'DIRECCION';
 const hoy = () => new Date().toLocaleDateString('sv-SE'); // AAAA-MM-DD en hora local
@@ -14,9 +15,18 @@ const CODITOS = 28, PIZZA = 27, RIGATONI = 30, NOQUIS = 26, BUNUELOS_5K = 19;
 const ensayoOk = { humedad: 11.5, ph: 6.2, aroma: 'Característico', color: 'Amarillo ámbar uniforme', sabor: 'Característico', ufc: 320 };
 const ubicacion = { deposito: 'Producto terminado', sector: 'Secos · Ambiente', rack: 'A03', nivel: '02' };
 
-/** Cada prueba arranca con insumos de sobra (el seed deja algunos bajos a propósito para el Panel). */
+/** Cada prueba arranca con insumos de sobra (el seed deja algunos bajos a propósito para el Panel).
+ *  Hasta que exista el módulo de Compras, las partidas se cargan directo en la base de pruebas. */
+let reposiciones = 0;
 async function reponerTodo() {
-  for (let insumo_id = 1; insumo_id <= 42; insumo_id++) await api(PROD, 'post', '/demo/reponer', { insumo_id, cantidad: 20000 });
+  const insumos = await prisma.insumo.findMany({ select: { id: true, codigo: true } });
+  const n = ++reposiciones;
+  await prisma.partidaInsumo.createMany({
+    data: insumos.map((i) => ({
+      insumo_id: i.id, nro_lote: `PRUEBA-${n}-${i.codigo}`, proveedor: 'Pruebas', cantidad: 20000, vencimiento: null,
+      documento_origen: `REM-PRUEBA-${n}-${i.codigo}`, estado: 'LIBERADO' as const, ingreso: new Date(),
+    })),
+  });
 }
 /** Crea y planifica una orden. */
 async function nuevaOrden(producto_id = CODITOS, cantidad_kg = 1000) {
@@ -83,15 +93,20 @@ describe('Catálogo de agrifood-argentina.com', () => {
 
 describe('Seguridad: sesión y permisos', () => {
   test('sin sesión no se puede operar (401) y con un token inválido tampoco', async () => {
-    const { default: request } = await import('supertest');
-    const { app } = await import('./ayuda.js');
     expect((await request(app).get('/api/ordenes')).status).toBe(401);
     expect((await request(app).get('/api/ordenes').set('Authorization', 'Bearer cualquiera')).status).toBe(401);
   });
 
+  test('CORS: sólo las pantallas de un origen permitido pueden llamar a la API', async () => {
+    const ok = await request(app).options('/api/auth/login').set('Origin', 'http://localhost:5173');
+    expect(ok.status).toBe(204);
+    expect(ok.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+    expect(ok.headers['access-control-allow-headers']).toMatch(/Authorization/);
+    const otro = await request(app).get('/api/salud').set('Origin', 'https://otro-sitio.com');
+    expect(otro.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
   test('contraseña incorrecta: 401 con un mensaje que no da pistas', async () => {
-    const { default: request } = await import('supertest');
-    const { app } = await import('./ayuda.js');
     const r = await request(app).post('/api/auth/login').send({ email: 'calidad@sigta.demo', password: 'mal' });
     expect(r.status).toBe(401);
     expect(r.body.error).toBe('Email o contraseña incorrectos');
@@ -137,14 +152,48 @@ describe('CU-P01 Registrar orden de producción', () => {
     expect(r.planificable).toBe(true);
   });
 
-  test('con faltantes críticos no se puede planificar, pero sí guardar borrador (y avisa a Compras)', async () => {
+  test('con faltantes críticos igual se puede planificar: avisa a Compras y no deja elaborar hasta que llegue lo que falta', async () => {
     const plan = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' });
-    expect(plan.estado).toBe(409);
+    expect(plan.estado, JSON.stringify(plan.cuerpo)).toBe(200);
+    expect(plan.cuerpo.estado).toBe('PLANIFICADA');
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { titulo: string }[];
+    expect(alertas.some((a) => a.titulo.includes(plan.cuerpo.numero))).toBe(true);
+    const iniciar = await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/iniciar`);
+    expect(iniciar.estado).toBe(409);
+    expect(iniciar.cuerpo.error).toMatch(/^Todavía no se puede elaborar: falta en planta/);
+    // se cancela para no dejar reservados los insumos de una orden de prueba
+    expect((await api(PROD, 'post', `/ordenes/${plan.cuerpo.id}/cancelar`, { motivo: 'Prueba' })).estado).toBe(200);
+  });
+
+  test('las notificaciones muestran lo que pasa ahora: aparecen con el problema y se van cuando se resuelve', async () => {
+    type Alerta = { id: string; tipo: string; titulo: string; detalle: string; destino: string };
+    const alertas = async () => (await api(PROD, 'get', '/alertas')).cuerpo as Alerta[];
+    const plan = (await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 90000, fecha_proyectada: hoy(), accion: 'PLANIFICAR' })).cuerpo;
+    const deLaOrden = (await alertas()).find((a) => a.id === `faltantes-${plan.id}`)!;
+    expect(deLaOrden.titulo).toContain(plan.numero);
+    expect(deLaOrden.destino).toBe(`/ejecucion/${plan.id}`);
+    // el número de la campana es la cantidad de notificaciones vigentes
+    expect((await api(PROD, 'get', '/pendientes')).cuerpo.alertas).toBe((await alertas()).length);
+    // la orden planificada muestra cuánto hay en planta de cada insumo
+    const orden = (await api(PROD, 'get', `/ordenes/${plan.id}`)).cuerpo as { items: { cantidad_teorica: number; en_planta: number; critico: boolean }[] };
+    expect(orden.items.some((i) => i.critico && i.en_planta < i.cantidad_teorica)).toBe(true);
+    // la reserva de una orden enorme deja stock bajo: también se avisa, y lleva a "Para resolver"
+    expect((await alertas()).find((a) => a.tipo === 'stock')?.destino).toBe('/panel#para-resolver');
+    // al cancelar la orden, su notificación desaparece
+    await api(PROD, 'post', `/ordenes/${plan.id}/cancelar`, { motivo: 'Prueba' });
+    expect((await alertas()).some((a) => a.id === `faltantes-${plan.id}`)).toBe(false);
+    // y cuando llega mercadería, el stock bajo también se va
+    await reponerTodo();
+    expect((await alertas()).some((a) => a.tipo === 'stock')).toBe(false);
+  });
+
+  test('un borrador con faltantes también aparece en las notificaciones', async () => {
     const borrador = await api(PROD, 'post', '/ordenes', { producto_id: BUNUELOS_5K, cantidad_kg: 100000, fecha_proyectada: hoy(), accion: 'BORRADOR' });
     expect(borrador.estado).toBe(200);
     expect(borrador.cuerpo.estado).toBe('CREADA');
-    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { detalle: string }[];
-    expect(alertas.some((a) => /Compras/i.test(a.detalle))).toBe(true);
+    const alertas = (await api(PROD, 'get', '/alertas')).cuerpo as { titulo: string; destino: string }[];
+    const suya = alertas.find((a) => a.titulo.includes(borrador.cuerpo.numero));
+    expect(suya?.destino).toBe(`/ordenes/${borrador.cuerpo.id}`);
   });
 
   test('un borrador se puede completar y planificar después', async () => {
@@ -317,12 +366,25 @@ describe('Reglas en la base de datos (aunque alguien se saltee la aplicación)',
   });
 });
 
-describe('Herramientas de la demo', () => {
-  test('reiniciar la demo vuelve a los datos de ejemplo', async () => {
-    expect((await api(PROD, 'post', '/demo/reset')).estado).toBe(200);
+describe('Datos iniciales y accesos rápidos', () => {
+  test('la carga inicial deja el circuito con órdenes en cada paso', async () => {
+    await cargarDatosDeEjemplo();
     expect((await api(DIR, 'get', '/ordenes')).cuerpo).toHaveLength(25);
     const pendientes = (await api(DIR, 'get', '/pendientes')).cuerpo;
     expect(pendientes).toMatchObject({ planificar: 1, elaborar: 3, calidad: 3, deposito: 1 });
+  });
+
+  test('el ingreso ofrece entrar con cualquier usuario activo', async () => {
+    const r = await request(app).get('/api/auth/accesos');
+    expect(r.status).toBe(200);
+    expect(r.body.usuarios.map((u: { rol: string }) => u.rol)).toEqual(['PRODUCCION', 'CALIDAD', 'DEPOSITO', 'DIRECCION']);
+    const login = await request(app).post('/api/auth/login').send({ email: r.body.usuarios[1].email, password: r.body.clave });
+    expect(login.status).toBe(200);
+  });
+
+  test('ya no existen las herramientas de la demo (reponer stock y reiniciar)', async () => {
+    expect((await api(PROD, 'post', '/demo/reponer', { insumo_id: 1, cantidad: 10 })).estado).toBe(404);
+    expect((await api(PROD, 'post', '/demo/reset')).estado).toBe(404);
   });
 });
 

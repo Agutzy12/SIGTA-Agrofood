@@ -1,9 +1,8 @@
 /**
- * Aplicación Express: API REST en /api y, en producción, las pantallas ya compiladas (client/dist).
+ * Aplicación Express: API REST en /api. Las pantallas están en el repositorio SIGTA-Agrofood-Front.
  */
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { ORIGENES_PERMITIDOS } from './config.js';
 import { crearRouter } from './rutas.js';
 import { HttpError, errorDeRegla } from './errores.js';
 import { hayBaseConfigurada } from './db.js';
@@ -19,20 +18,28 @@ export function crearApp() {
     next();
   });
 
+  // CORS: las pantallas se publican en otro dominio y llaman a esta API.
+  // La sesión viaja en la cabecera Authorization (no en cookies), así que alcanza con permitir el origen.
+  app.use((req, res, next) => {
+    const origen = req.headers.origin;
+    if (origen && (ORIGENES_PERMITIDOS.includes('*') || ORIGENES_PERMITIDOS.includes(origen))) {
+      res.setHeader('Access-Control-Allow-Origin', origen);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type');
+      res.setHeader('Access-Control-Max-Age', '600');
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
   // Si el servidor se publicó sin base de datos, se avisa con un mensaje claro en vez de un error genérico
   app.use('/api', (_req, res, next) => {
     if (hayBaseConfigurada()) return next();
-    res.status(503).json({ error: 'Falta configurar la base de datos (variable DATABASE_URL). Ver docs/DESPLIEGUE.md.' });
+    res.status(503).json({ error: 'Falta configurar la base de datos (variable DATABASE_URL). Ver el README del repositorio.' });
   });
   app.use('/api', crearRouter());
   app.use('/api', (_req, res) => { res.status(404).json({ error: 'Ruta inexistente' }); });
-
-  // Pantallas compiladas (npm run build). En desarrollo las sirve Vite en otro puerto.
-  const cliente = fileURLToPath(new URL('../../client/dist', import.meta.url));
-  if (existsSync(cliente)) {
-    app.use(express.static(cliente, { maxAge: '1h', index: false }));
-    app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile('index.html', { root: cliente }));
-  }
 
   // Manejo de errores: todo error termina en una respuesta JSON { error: "mensaje" }
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
