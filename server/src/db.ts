@@ -5,14 +5,19 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { Prisma, PrismaClient } from '@prisma/client';
 
 /**
- * En la nube (Neon) la aplicación usa la conexión "con pool" (host con "-pooler"): Prisma necesita saberlo
- * para no usar sentencias preparadas. Las migraciones usan la conexión directa (DATABASE_URL_UNPOOLED).
+ * ¿La dirección es de una conexión "con pool" en modo transacción?
+ * - Neon: el host lleva "-pooler".
+ * - Supabase: el "Transaction pooler" usa el puerto 6543.
+ * Con ese tipo de conexión Prisma no puede usar sentencias preparadas: hay que avisarle (pgbouncer=true).
  */
+export const esConexionConPool = (url: string) => url.includes('-pooler.') || /:6543(\/|$|\?)/.test(url);
+
+/** La aplicación usa la conexión con pool; las migraciones, la directa (DATABASE_URL_UNPOOLED). */
 function urlDeConexion() {
   const url = process.env.DATABASE_URL;
   if (!url) return undefined;
   process.env.DATABASE_URL_UNPOOLED ||= url;
-  return url.includes('-pooler.') && !url.includes('pgbouncer=') ? `${url}${url.includes('?') ? '&' : '?'}pgbouncer=true` : url;
+  return esConexionConPool(url) && !url.includes('pgbouncer=') ? `${url}${url.includes('?') ? '&' : '?'}pgbouncer=true` : url;
 }
 
 export const hayBaseConfigurada = () => Boolean(process.env.DATABASE_URL);

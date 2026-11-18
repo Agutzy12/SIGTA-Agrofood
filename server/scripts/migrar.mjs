@@ -1,14 +1,19 @@
 // Aplica las migraciones pendientes (npm run db:migrate).
-// Las migraciones necesitan la conexión DIRECTA a la base: con la conexión "pooler" de Neon
-// el bloqueo que usa Prisma para no aplicar dos veces lo mismo se corta por tiempo.
-// Si no hay DATABASE_URL_UNPOOLED (o apunta al pooler), se arma la directa sacando "-pooler" del host.
+// Las migraciones necesitan una conexión directa (o en modo sesión), no la "con pool" en modo transacción.
+// Si DATABASE_URL_UNPOOLED no está (o apunta al pool), se arma a partir de DATABASE_URL (Neon o Supabase).
 import { execSync } from 'node:child_process';
 
 if (!process.env.DATABASE_URL) {
   console.error('Falta DATABASE_URL: no se pueden aplicar las migraciones.');
   process.exit(1);
 }
-const directa = (url) => url.replace('-pooler.', '.').replace(/([?&])pgbouncer=true&?/, '$1').replace(/[?&]$/, '');
+// Conexión directa (o en modo sesión) para migrar:
+// - Neon: se saca "-pooler" del host.
+// - Supabase: del "Transaction pooler" (puerto 6543) se pasa al "Session pooler" (mismo host, puerto 5432).
+const directa = (url) => url
+  .replace('-pooler.', '.')
+  .replace(/(\.pooler\.supabase\.com):6543/, '$1:5432')
+  .replace(/([?&])pgbouncer=true&?/, '$1').replace(/[?&]$/, '');
 const base = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 process.env.DATABASE_URL_UNPOOLED = directa(base);
 // Prisma toma un "advisory lock" para que dos procesos no migren a la vez. Una compilación que se cortó
